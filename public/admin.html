@@ -3,241 +3,207 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel - Jadwal Azan TV</title>
+  <title>Panel Pengurus — AdhanCast</title>
+  <link rel="stylesheet" href="/css/tokens.css">
   <link rel="stylesheet" href="/css/admin.css">
   <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%235e72e4%22 stroke-width=%222%22><path d=%22M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z%22/></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%225%22 fill=%22%230F766E%22/><path d=%22M6 19v-6a6 6 0 0 1 12 0v6z%22 fill=%22%23fff%22/></svg>">
 </head>
 <body>
-  <!-- ARGON SIDEBAR -->
+  <a class="skip-link" href="#main-content">Lewati ke konten</a>
+
+  <!-- SIDEBAR -->
   <aside class="sidebar">
-    <div class="sidebar-brand">
-      <div class="brand-icon">
-        <iconify-icon icon="lucide:mosque"></iconify-icon>
-      </div>
+    <header class="sidebar-brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="6" fill="#0F766E"/>
+        <path d="M9 25v-8a7 7 0 0 1 14 0v8z" fill="#fff"/>
+        <path d="M13 25v-5a3 3 0 0 1 6 0v5z" fill="#0F766E"/>
+      </svg>
       <div class="brand-text">
-        <h2>AdhanCast</h2>
-        <p>Admin Panel</p>
-      </div>
-    </div>
-
-    <nav class="sidebar-nav">
-      <div class="nav-heading">Pengaturan</div>
-      
-      <div class="nav-item active" data-tab="tab-masjid">
-        <div class="icon-wrapper">
-          <iconify-icon icon="lucide:map-pin"></iconify-icon>
-        </div>
-        <span>Masjid & Lokasi</span>
-      </div>
-
-      <div class="nav-item" data-tab="tab-ihtiyat">
-        <div class="icon-wrapper">
-          <iconify-icon icon="lucide:clock-4"></iconify-icon>
-        </div>
-        <span>Koreksi Ihtiyat</span>
-      </div>
-
-      <div class="nav-item" data-tab="tab-timers">
-        <div class="icon-wrapper">
-          <iconify-icon icon="lucide:hourglass"></iconify-icon>
-        </div>
-        <span>Timer Iqomah & Salat</span>
-      </div>
-
-      <div class="nav-heading">Konten TV</div>
-
-      <div class="nav-item" data-tab="tab-ticker">
-        <div class="icon-wrapper">
-          <iconify-icon icon="lucide:message-square"></iconify-icon>
-        </div>
-        <span>Running Text</span>
-      </div>
-
-      <div class="nav-item" data-tab="tab-slides">
-        <div class="icon-wrapper">
-          <iconify-icon icon="lucide:images"></iconify-icon>
-        </div>
-        <span>Agenda & Kegiatan</span>
-      </div>
-
-      <div class="nav-item" data-tab="tab-jumat">
-        <div class="icon-wrapper">
-          <iconify-icon icon="lucide:calendar"></iconify-icon>
-        </div>
-        <span>Petugas Jum'at</span>
-      </div>
-
-      <div class="nav-heading">Tampilan & Sistem</div>
-
-      <div class="nav-item" data-tab="tab-bg-theme">
-        <div class="icon-wrapper">
-          <iconify-icon icon="lucide:image"></iconify-icon>
-        </div>
-        <span>Background & Tema</span>
-      </div>
-
-      <div class="nav-item" data-tab="tab-monitoring">
-        <div class="icon-wrapper">
-          <iconify-icon icon="lucide:tv"></iconify-icon>
-        </div>
-        <span>Monitoring TV</span>
-      </div>
-    </nav>
-
-    <div class="sidebar-footer">
-      <a href="/tv" target="_blank" class="btn-open-tv">
-        <span>Buka Layar TV</span>
-        <iconify-icon icon="lucide:external-link"></iconify-icon>
-      </a>
-      <button class="btn-logout" id="btn-logout">
-        <iconify-icon icon="lucide:log-out" style="margin-right: 4px;"></iconify-icon> Keluar
-      </button>
-    </div>
-  </aside>
-
-  <!-- MAIN WRAPPER -->
-  <div class="main-wrapper">
-    <!-- HEADER BANNER -->
-    <header class="argon-header">
-      <div class="argon-topbar">
-        <div class="topbar-breadcrumb">
-          <span class="breadcrumb-label">PANEL PENGURUS</span>
-          <h2 class="breadcrumb-title" id="topbar-mosque-name">MASJID LUQMANUL HAKIM</h2>
-        </div>
-        <div class="topbar-pill">
-          <span class="dot"></span>
-          <span id="topbar-tv-count">0 TV Online</span>
-        </div>
-      </div>
-
-      <!-- 4 KPI STAT CARDS -->
-      <div class="stats-grid">
-        <div class="card-stat">
-          <div class="stat-meta">
-            <h5>Sholat Berikutnya</h5>
-            <div class="stat-value" id="kpi-next-prayer">--:--</div>
-            <div class="stat-sub" id="kpi-next-cd">Menghitung...</div>
-          </div>
-          <div class="stat-icon bg-grad-red">
-            <iconify-icon icon="lucide:clock"></iconify-icon>
-          </div>
-        </div>
-
-        <div class="card-stat">
-          <div class="stat-meta">
-            <h5>Google TV Online</h5>
-            <div class="stat-value" id="kpi-tv-status">0 TV</div>
-            <div class="stat-sub">Terhubung Live</div>
-          </div>
-          <div class="stat-icon bg-grad-green">
-            <iconify-icon icon="lucide:tv"></iconify-icon>
-          </div>
-        </div>
-
-        <div class="card-stat">
-          <div class="stat-meta">
-            <h5>Petugas Jum'at</h5>
-            <div class="stat-value" id="kpi-jumat-khatib">-</div>
-            <div class="stat-sub" id="kpi-jumat-tgl">Pekan Ini</div>
-          </div>
-          <div class="stat-icon bg-grad-orange">
-            <iconify-icon icon="lucide:calendar"></iconify-icon>
-          </div>
-        </div>
-
-        <div class="card-stat">
-          <div class="stat-meta">
-            <h5>Agenda & Warta</h5>
-            <div class="stat-value" id="kpi-content-count">0 Konten</div>
-            <div class="stat-sub">Slide & Ticker Aktif</div>
-          </div>
-          <div class="stat-icon bg-grad-info">
-            <iconify-icon icon="lucide:layers"></iconify-icon>
-          </div>
-        </div>
+        <span class="brand-name">AdhanCast</span>
+        <span class="brand-role">Panel Pengurus</span>
       </div>
     </header>
 
-    <!-- CONTENT BODY -->
-    <main class="argon-content">
+    <nav class="sidebar-nav" aria-label="Menu pengaturan">
+      <p class="nav-heading">Jadwal</p>
+      <button type="button" class="nav-item active" data-tab="tab-masjid" aria-current="page">
+        <iconify-icon icon="lucide:map-pin" aria-hidden="true"></iconify-icon>
+        <span>Masjid &amp; Lokasi</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="tab-ihtiyat">
+        <iconify-icon icon="lucide:clock-4" aria-hidden="true"></iconify-icon>
+        <span>Koreksi Ihtiyat</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="tab-timers">
+        <iconify-icon icon="lucide:hourglass" aria-hidden="true"></iconify-icon>
+        <span>Timer Iqomah &amp; Salat</span>
+      </button>
+
+      <p class="nav-heading">Konten TV</p>
+      <button type="button" class="nav-item" data-tab="tab-ticker">
+        <iconify-icon icon="lucide:message-square" aria-hidden="true"></iconify-icon>
+        <span>Running Text</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="tab-slides">
+        <iconify-icon icon="lucide:images" aria-hidden="true"></iconify-icon>
+        <span>Agenda &amp; Kegiatan</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="tab-jumat">
+        <iconify-icon icon="lucide:calendar" aria-hidden="true"></iconify-icon>
+        <span>Petugas Jum'at</span>
+      </button>
+
+      <p class="nav-heading">Tampilan &amp; Sistem</p>
+      <button type="button" class="nav-item" data-tab="tab-bg-theme">
+        <iconify-icon icon="lucide:image" aria-hidden="true"></iconify-icon>
+        <span>Background &amp; Akun</span>
+      </button>
+      <button type="button" class="nav-item" data-tab="tab-monitoring">
+        <iconify-icon icon="lucide:tv" aria-hidden="true"></iconify-icon>
+        <span>Monitoring TV</span>
+      </button>
+    </nav>
+
+    <footer class="sidebar-footer">
+      <a href="/tv" target="_blank" rel="noopener" class="btn btn-secondary btn-block">
+        <iconify-icon icon="lucide:external-link" aria-hidden="true"></iconify-icon>
+        <span>Buka layar TV</span>
+      </a>
+      <button type="button" class="btn btn-ghost btn-block" id="btn-logout">
+        <iconify-icon icon="lucide:log-out" aria-hidden="true"></iconify-icon>
+        <span>Keluar</span>
+      </button>
+    </footer>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-wrapper">
+    <header class="page-header">
+      <div class="topbar">
+        <div>
+          <p class="eyebrow">Panel pengurus</p>
+          <h1 class="page-title" id="topbar-mosque-name">Memuat…</h1>
+        </div>
+        <p class="status-chip" id="topbar-tv-status" data-state="offline">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="topbar-tv-count">0 TV online</span>
+        </p>
+      </div>
+
+      <!-- OVERVIEW: one dominant card + a compact facts column -->
+      <div class="overview">
+        <section class="next-prayer" aria-labelledby="kpi-next-label">
+          <div class="next-prayer-main">
+            <p class="kpi-label" id="kpi-next-label">Sholat berikutnya</p>
+            <p class="next-prayer-name" id="kpi-next-prayer">--:--</p>
+            <p class="next-prayer-cd">
+              <iconify-icon icon="lucide:timer" aria-hidden="true"></iconify-icon>
+              <span id="kpi-next-cd">Menghitung…</span>
+            </p>
+          </div>
+          <ol class="today-schedule" id="today-schedule" aria-label="Jadwal hari ini"></ol>
+        </section>
+
+        <dl class="facts">
+          <div class="fact">
+            <dt>TV terhubung</dt>
+            <dd id="kpi-tv-status">0 TV</dd>
+          </div>
+          <div class="fact">
+            <dt>Khatib Jum'at</dt>
+            <dd id="kpi-jumat-khatib">-</dd>
+            <dd class="fact-sub" id="kpi-jumat-tgl">Pekan ini</dd>
+          </div>
+          <div class="fact">
+            <dt>Konten tayang</dt>
+            <dd id="kpi-content-count">0 slide · 0 teks</dd>
+          </div>
+        </dl>
+      </div>
+    </header>
+
+    <main class="content" id="main-content" tabindex="-1">
 
       <!-- TAB 1: MASJID & LOKASI -->
-      <section class="tab-content active" id="tab-masjid">
-        <form id="form-masjid">
-          <div class="card-argon">
-            <div class="card-header-argon">
-              <h3>Identitas Masjid & Yayasan</h3>
+      <section class="tab-content active" id="tab-masjid" aria-labelledby="h-masjid">
+        <form id="form-masjid" novalidate>
+          <div class="card">
+            <div class="card-header">
+              <h2 id="h-masjid">Identitas masjid &amp; yayasan</h2>
+              <p>Tampil di bagian atas layar TV.</p>
             </div>
-            <div class="card-body-argon">
-              <div class="form-grid-2">
-                <div class="form-group-argon">
-                  <label class="label-argon" for="mosque_name">Nama Masjid / Yayasan</label>
-                  <input type="text" class="input-argon" id="mosque_name" name="mosque_name" required>
+            <div class="card-body">
+              <div class="form-grid form-grid-2-1">
+                <div class="field">
+                  <label for="mosque_name">Nama masjid / yayasan</label>
+                  <input type="text" class="input" id="mosque_name" name="mosque_name" required>
                 </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="mosque_address">Alamat Singkat</label>
-                  <input type="text" class="input-argon" id="mosque_address" name="mosque_address" required>
+                <div class="field">
+                  <label for="mosque_address">Alamat singkat</label>
+                  <input type="text" class="input" id="mosque_address" name="mosque_address" required>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="card-argon">
-            <div class="card-header-argon">
-              <h3>Koordinat Astronomis & Lokasi Hisab</h3>
+          <div class="card">
+            <div class="card-header">
+              <h2>Koordinat &amp; lokasi hisab</h2>
+              <p>Dipakai untuk menghitung waktu sholat. Pilih preset kota lalu sesuaikan bila perlu.</p>
             </div>
-            <div class="card-body-argon">
-              <div class="form-group-argon">
-                <label class="label-argon" for="city_preset">Preset Kota Acuan</label>
-                <select class="input-argon" id="city_preset"></select>
+            <div class="card-body">
+              <div class="field field-narrow">
+                <label for="city_preset">Preset kota acuan</label>
+                <select class="input" id="city_preset"></select>
               </div>
 
-              <div class="form-grid-2">
-                <div class="form-group-argon">
-                  <label class="label-argon" for="city_name">Nama Kota</label>
-                  <input type="text" class="input-argon" id="city_name" name="city_name" required>
+              <div class="form-grid form-grid-3">
+                <div class="field">
+                  <label for="city_name">Nama kota</label>
+                  <input type="text" class="input" id="city_name" name="city_name" required>
                 </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="timezone">Zona Waktu</label>
-                  <select class="input-argon" id="timezone" name="timezone">
+                <div class="field">
+                  <label for="latitude">Latitude (lintang)</label>
+                  <input type="text" class="input" id="latitude" name="latitude" inputmode="decimal" pattern="-?\d{1,2}(\.\d+)?" required aria-describedby="latitude-hint">
+                  <p class="hint" id="latitude-hint">Contoh: -6.9175</p>
+                </div>
+                <div class="field">
+                  <label for="longitude">Longitude (bujur)</label>
+                  <input type="text" class="input" id="longitude" name="longitude" inputmode="decimal" pattern="-?\d{1,3}(\.\d+)?" required aria-describedby="longitude-hint">
+                  <p class="hint" id="longitude-hint">Contoh: 107.6191</p>
+                </div>
+              </div>
+
+              <div class="form-grid form-grid-3">
+                <div class="field">
+                  <label for="timezone">Zona waktu</label>
+                  <select class="input" id="timezone" name="timezone">
                     <option value="7">WIB (GMT+7)</option>
                     <option value="8">WITA (GMT+8)</option>
                     <option value="9">WIT (GMT+9)</option>
                   </select>
                 </div>
-              </div>
-
-              <div class="form-grid-2">
-                <div class="form-group-argon">
-                  <label class="label-argon" for="latitude">Latitude (Lintang)</label>
-                  <input type="text" class="input-argon" id="latitude" name="latitude" required>
+                <div class="field">
+                  <label for="elevation">Elevasi (mdpl)</label>
+                  <input type="number" class="input" id="elevation" name="elevation" value="700" min="0" max="5000">
                 </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="longitude">Longitude (Bujur)</label>
-                  <input type="text" class="input-argon" id="longitude" name="longitude" required>
-                </div>
-              </div>
-
-              <div class="form-grid-2">
-                <div class="form-group-argon">
-                  <label class="label-argon" for="elevation">Elevasi (MDPL)</label>
-                  <input type="number" class="input-argon" id="elevation" name="elevation" value="700">
-                </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="hijri_offset">Koreksi Kalender Hijriyah</label>
-                  <select class="input-argon" id="hijri_offset" name="hijri_offset">
-                    <option value="-2">-2 Hari</option>
-                    <option value="-1">-1 Hari</option>
-                    <option value="0" selected>0 Hari</option>
-                    <option value="1">+1 Hari</option>
-                    <option value="2">+2 Hari</option>
+                <div class="field">
+                  <label for="hijri_offset">Koreksi kalender Hijriyah</label>
+                  <select class="input" id="hijri_offset" name="hijri_offset">
+                    <option value="-2">-2 hari</option>
+                    <option value="-1">-1 hari</option>
+                    <option value="0" selected>0 hari</option>
+                    <option value="1">+1 hari</option>
+                    <option value="2">+2 hari</option>
                   </select>
                 </div>
               </div>
-
-              <button type="submit" class="btn-argon btn-primary-argon">
-                <iconify-icon icon="lucide:check"></iconify-icon> Simpan Data
+            </div>
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">
+                <iconify-icon icon="lucide:check" aria-hidden="true"></iconify-icon> Simpan identitas &amp; lokasi
               </button>
             </div>
           </div>
@@ -245,117 +211,79 @@
       </section>
 
       <!-- TAB 2: KOREKSI IHTIYAT -->
-      <section class="tab-content" id="tab-ihtiyat">
-        <form id="form-ihtiyat">
-          <div class="card-argon">
-            <div class="card-header-argon">
-              <h3>Koreksi Menit Sholat (Ihtiyat)</h3>
+      <section class="tab-content" id="tab-ihtiyat" aria-labelledby="h-ihtiyat" hidden>
+        <form id="form-ihtiyat" novalidate>
+          <div class="card">
+            <div class="card-header">
+              <h2 id="h-ihtiyat">Koreksi menit sholat (ihtiyat)</h2>
+              <p>Menit ditambahkan ke hasil hisab. Angka negatif memajukan waktu.</p>
             </div>
-            <div class="card-body-argon">
-              <div class="form-grid-4">
-                <div class="form-group-argon">
-                  <label class="label-argon" for="ihtiyat_imsak">Imsak (menit)</label>
-                  <input type="number" class="input-argon" id="ihtiyat_imsak" name="ihtiyat_imsak">
-                </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="ihtiyat_subuh">Subuh (menit)</label>
-                  <input type="number" class="input-argon" id="ihtiyat_subuh" name="ihtiyat_subuh">
-                </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="ihtiyat_terbit">Syuruq / Terbit (menit)</label>
-                  <input type="number" class="input-argon" id="ihtiyat_terbit" name="ihtiyat_terbit">
-                </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="ihtiyat_dhuha">Dhuha (menit)</label>
-                  <input type="number" class="input-argon" id="ihtiyat_dhuha" name="ihtiyat_dhuha">
-                </div>
+            <div class="card-body">
+              <div class="form-grid form-grid-4">
+                <div class="field"><label for="ihtiyat_imsak">Imsak</label><input type="number" class="input" id="ihtiyat_imsak" name="ihtiyat_imsak" min="-30" max="30"></div>
+                <div class="field"><label for="ihtiyat_subuh">Subuh</label><input type="number" class="input" id="ihtiyat_subuh" name="ihtiyat_subuh" min="-30" max="30"></div>
+                <div class="field"><label for="ihtiyat_terbit">Syuruq / terbit</label><input type="number" class="input" id="ihtiyat_terbit" name="ihtiyat_terbit" min="-30" max="30"></div>
+                <div class="field"><label for="ihtiyat_dhuha">Dhuha</label><input type="number" class="input" id="ihtiyat_dhuha" name="ihtiyat_dhuha" min="-30" max="30"></div>
+                <div class="field"><label for="ihtiyat_dzuhur">Dzuhur</label><input type="number" class="input" id="ihtiyat_dzuhur" name="ihtiyat_dzuhur" min="-30" max="30"></div>
+                <div class="field"><label for="ihtiyat_ashar">Ashar</label><input type="number" class="input" id="ihtiyat_ashar" name="ihtiyat_ashar" min="-30" max="30"></div>
+                <div class="field"><label for="ihtiyat_maghrib">Maghrib</label><input type="number" class="input" id="ihtiyat_maghrib" name="ihtiyat_maghrib" min="-30" max="30"></div>
+                <div class="field"><label for="ihtiyat_isya">Isya</label><input type="number" class="input" id="ihtiyat_isya" name="ihtiyat_isya" min="-30" max="30"></div>
               </div>
-
-              <div class="form-grid-4">
-                <div class="form-group-argon">
-                  <label class="label-argon" for="ihtiyat_dzuhur">Dzuhur (menit)</label>
-                  <input type="number" class="input-argon" id="ihtiyat_dzuhur" name="ihtiyat_dzuhur">
-                </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="ihtiyat_ashar">Ashar (menit)</label>
-                  <input type="number" class="input-argon" id="ihtiyat_ashar" name="ihtiyat_ashar">
-                </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="ihtiyat_maghrib">Maghrib (menit)</label>
-                  <input type="number" class="input-argon" id="ihtiyat_maghrib" name="ihtiyat_maghrib">
-                </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="ihtiyat_isya">Isya (menit)</label>
-                  <input type="number" class="input-argon" id="ihtiyat_isya" name="ihtiyat_isya">
-                </div>
-              </div>
-
-              <button type="submit" class="btn-argon btn-primary-argon">
-                <iconify-icon icon="lucide:check"></iconify-icon> Simpan Ihtiyat
+            </div>
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">
+                <iconify-icon icon="lucide:check" aria-hidden="true"></iconify-icon> Simpan koreksi
               </button>
             </div>
           </div>
         </form>
       </section>
 
-      <!-- TAB 3: TIMERS & AUDIO -->
-      <section class="tab-content" id="tab-timers">
-        <form id="form-timers">
-          <div class="card-argon">
-            <div class="card-header-argon">
-              <h3>Timer Azan & Salat Hening</h3>
+      <!-- TAB 3: TIMERS -->
+      <section class="tab-content" id="tab-timers" aria-labelledby="h-timers" hidden>
+        <form id="form-timers" novalidate>
+          <div class="card">
+            <div class="card-header">
+              <h2 id="h-timers">Hitung mundur iqomah</h2>
+              <p>Menit antara selesai azan dan iqomah, per waktu sholat.</p>
             </div>
-            <div class="card-body-argon">
-              <div class="form-grid-3">
-                <div class="form-group-argon">
-                  <label class="label-argon" for="azan_duration">Layar Azan (menit)</label>
-                  <input type="number" class="input-argon" id="azan_duration" name="azan_duration" min="1" max="10" required>
+            <div class="card-body">
+              <div class="form-grid form-grid-5">
+                <div class="field"><label for="iqomah_subuh">Subuh</label><input type="number" class="input" id="iqomah_subuh" name="iqomah_subuh" min="1" max="60" required></div>
+                <div class="field"><label for="iqomah_dzuhur">Dzuhur</label><input type="number" class="input" id="iqomah_dzuhur" name="iqomah_dzuhur" min="1" max="60" required></div>
+                <div class="field"><label for="iqomah_ashar">Ashar</label><input type="number" class="input" id="iqomah_ashar" name="iqomah_ashar" min="1" max="60" required></div>
+                <div class="field"><label for="iqomah_maghrib">Maghrib</label><input type="number" class="input" id="iqomah_maghrib" name="iqomah_maghrib" min="1" max="60" required></div>
+                <div class="field"><label for="iqomah_isya">Isya</label><input type="number" class="input" id="iqomah_isya" name="iqomah_isya" min="1" max="60" required></div>
+              </div>
+            </div>
+
+            <div class="card-divider" role="presentation"></div>
+
+            <div class="card-header card-header-inline">
+              <h3>Layar azan &amp; salat</h3>
+            </div>
+            <div class="card-body">
+              <div class="form-grid form-grid-3">
+                <div class="field">
+                  <label for="azan_duration">Layar azan (menit)</label>
+                  <input type="number" class="input" id="azan_duration" name="azan_duration" min="1" max="10" required>
                 </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="salat_duration">Layar Salat (menit)</label>
-                  <input type="number" class="input-argon" id="salat_duration" name="salat_duration" min="5" max="45" required>
+                <div class="field">
+                  <label for="salat_duration">Layar salat (menit)</label>
+                  <input type="number" class="input" id="salat_duration" name="salat_duration" min="5" max="45" required>
                 </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="beep_enabled">Suara Bip TV</label>
-                  <select class="input-argon" id="beep_enabled" name="beep_enabled">
+                <div class="field">
+                  <label for="beep_enabled">Suara bip di TV</label>
+                  <select class="input" id="beep_enabled" name="beep_enabled">
                     <option value="1">Aktif</option>
                     <option value="0">Nonaktif</option>
                   </select>
                 </div>
               </div>
             </div>
-          </div>
-
-          <div class="card-argon">
-            <div class="card-header-argon">
-              <h3>Hitung Mundur Iqomah (Menit)</h3>
-            </div>
-            <div class="card-body-argon">
-              <div class="form-grid-4">
-                <div class="form-group-argon">
-                  <label class="label-argon" for="iqomah_subuh">Subuh</label>
-                  <input type="number" class="input-argon" id="iqomah_subuh" name="iqomah_subuh" required>
-                </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="iqomah_dzuhur">Dzuhur</label>
-                  <input type="number" class="input-argon" id="iqomah_dzuhur" name="iqomah_dzuhur" required>
-                </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="iqomah_ashar">Ashar</label>
-                  <input type="number" class="input-argon" id="iqomah_ashar" name="iqomah_ashar" required>
-                </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="iqomah_maghrib">Maghrib</label>
-                  <input type="number" class="input-argon" id="iqomah_maghrib" name="iqomah_maghrib" required>
-                </div>
-              </div>
-              <div style="max-width: 220px;" class="form-group-argon">
-                <label class="label-argon" for="iqomah_isya">Isya</label>
-                <input type="number" class="input-argon" id="iqomah_isya" name="iqomah_isya" required>
-              </div>
-
-              <button type="submit" class="btn-argon btn-primary-argon">
-                <iconify-icon icon="lucide:check"></iconify-icon> Simpan Timer
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">
+                <iconify-icon icon="lucide:check" aria-hidden="true"></iconify-icon> Simpan timer
               </button>
             </div>
           </div>
@@ -363,116 +291,117 @@
       </section>
 
       <!-- TAB 4: RUNNING TEXT -->
-      <section class="tab-content" id="tab-ticker">
-        <div class="card-argon">
-          <div class="card-header-argon">
-            <h3>Tambah Running Text</h3>
-          </div>
-          <div class="card-body-argon">
-            <form id="form-add-ticker">
-              <div class="form-group-argon">
-                <label class="label-argon" for="new-ticker-text">Teks Pengumuman (Yayasan / Sekolah / Hadits)</label>
-                <textarea class="input-argon" id="new-ticker-text" placeholder="Masukkan pengumuman..." required></textarea>
+      <section class="tab-content" id="tab-ticker" aria-labelledby="h-ticker" hidden>
+        <div class="split">
+          <div class="card">
+            <div class="card-header">
+              <h2 id="h-ticker">Tambah running text</h2>
+              <p>Berjalan di baris bawah layar TV.</p>
+            </div>
+            <form id="form-add-ticker" class="card-body" novalidate>
+              <div class="field">
+                <label for="new-ticker-text">Teks pengumuman</label>
+                <textarea class="input" id="new-ticker-text" rows="4" required placeholder="Contoh: Kajian Ahad pagi pukul 06.00 di ruang utama masjid"></textarea>
               </div>
-              <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-                <div style="max-width: 140px;" class="form-group-argon">
-                  <label class="label-argon" for="new-ticker-sort">Urutan</label>
-                  <input type="number" class="input-argon" id="new-ticker-sort" value="1">
-                </div>
-                <button type="submit" class="btn-argon btn-primary-argon">
-                  <iconify-icon icon="lucide:plus"></iconify-icon> Tambah Teks
-                </button>
+              <div class="field field-xs">
+                <label for="new-ticker-sort">Urutan</label>
+                <input type="number" class="input" id="new-ticker-sort" value="1" min="0">
               </div>
+              <button type="submit" class="btn btn-primary">
+                <iconify-icon icon="lucide:plus" aria-hidden="true"></iconify-icon> Tambah teks
+              </button>
             </form>
           </div>
-        </div>
 
-        <div class="card-argon">
-          <div class="card-header-argon">
-            <h3>Daftar Running Text</h3>
-          </div>
-          <div class="table-responsive">
-            <table class="table-argon">
-              <thead>
-                <tr>
-                  <th style="width: 70px;">Urut</th>
-                  <th>Pengumuman</th>
-                  <th style="width: 110px;">Status</th>
-                  <th style="width: 180px;">Aksi</th>
-                </tr>
-              </thead>
-              <tbody id="table-running-texts"></tbody>
-            </table>
+          <div class="card">
+            <div class="card-header">
+              <h2>Daftar running text</h2>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col" class="col-num">Urut</th>
+                    <th scope="col">Pengumuman</th>
+                    <th scope="col">Status</th>
+                    <th scope="col" class="col-actions"><span class="sr-only">Aksi</span></th>
+                  </tr>
+                </thead>
+                <tbody id="table-running-texts"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- TAB 5: SLIDES (AGENDA YAYASAN & KEGIATAN SEKOLAH) -->
-      <section class="tab-content" id="tab-slides">
-        <div class="card-argon">
-          <div class="card-header-argon">
-            <h3>Tambah Agenda Yayasan / Sekolah</h3>
+      <!-- TAB 5: SLIDES -->
+      <section class="tab-content" id="tab-slides" aria-labelledby="h-slides" hidden>
+        <div class="card">
+          <div class="card-header">
+            <h2 id="h-slides">Tambah agenda yayasan / sekolah</h2>
+            <p>Slide tampil bergantian dengan foto latar di tengah layar TV.</p>
           </div>
-          <div class="card-body-argon">
-            <form id="form-add-slide">
-              <div class="form-grid-2">
-                <div class="form-group-argon">
-                  <label class="label-argon" for="slide_title">Judul Agenda</label>
-                  <input type="text" class="input-argon" name="slide_title" id="slide_title" required placeholder="Contoh: Kegiatan MABIT Santri SMPIT">
+          <form id="form-add-slide" novalidate>
+            <div class="card-body">
+              <div class="form-grid form-grid-2-1">
+                <div class="field">
+                  <label for="slide_title">Judul agenda</label>
+                  <input type="text" class="input" name="slide_title" id="slide_title" required placeholder="Contoh: Kegiatan MABIT Santri SMPIT">
                 </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="slide_subtitle">Sub Judul</label>
-                  <input type="text" class="input-argon" name="slide_subtitle" id="slide_subtitle" placeholder="Contoh: TKIT - SDIT - SMPIT">
+                <div class="field">
+                  <label for="slide_subtitle">Sub judul</label>
+                  <input type="text" class="input" name="slide_subtitle" id="slide_subtitle" placeholder="Contoh: TKIT - SDIT - SMPIT">
                 </div>
               </div>
-              <div class="form-grid-2">
-                <div class="form-group-argon">
-                  <label class="label-argon" for="slide_type">Tipe Slide</label>
-                  <select class="input-argon" name="slide_type" id="slide_type">
-                    <option value="announcement">Informasi Kegiatan / Yayasan</option>
-                    <option value="hadith">Hadits / Pengingat</option>
-                    <option value="image">Gambar Poster Kegiatan</option>
+              <div class="form-grid form-grid-3">
+                <div class="field">
+                  <label for="slide_type">Tipe slide</label>
+                  <select class="input" name="slide_type" id="slide_type">
+                    <option value="announcement">Informasi kegiatan / yayasan</option>
+                    <option value="hadith">Hadits / pengingat</option>
+                    <option value="image">Gambar poster kegiatan</option>
                   </select>
                 </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="slide_duration">Durasi (detik)</label>
-                  <input type="number" class="input-argon" name="slide_duration" id="slide_duration" value="10" min="5" max="60">
+                <div class="field">
+                  <label for="slide_duration">Durasi (detik)</label>
+                  <input type="number" class="input" name="slide_duration" id="slide_duration" value="10" min="5" max="60">
+                </div>
+                <div class="field">
+                  <label for="slide_sort">Urutan</label>
+                  <input type="number" class="input" name="slide_sort" id="slide_sort" value="1" min="0">
                 </div>
               </div>
-              <div class="form-group-argon">
-                <label class="label-argon" for="slide_content">Isi Pengumuman</label>
-                <textarea class="input-argon" name="slide_content" id="slide_content" placeholder="Keterangan agenda yayasan..."></textarea>
+              <div class="field">
+                <label for="slide_content">Isi pengumuman</label>
+                <textarea class="input" name="slide_content" id="slide_content" rows="4" placeholder="Waktu, tempat, dan peserta kegiatan"></textarea>
               </div>
-              <div class="form-group-argon">
-                <label class="label-argon" for="slide_file">File Poster (Khusus tipe Gambar)</label>
-                <input type="file" class="input-argon" id="slide_file" accept="image/*">
+              <div class="field" id="slide-file-field">
+                <label for="slide_file">File poster</label>
+                <input type="file" class="input input-file" id="slide_file" accept="image/*" aria-describedby="slide-file-hint">
+                <p class="hint" id="slide-file-hint">Wajib untuk tipe "Gambar poster kegiatan". JPG, PNG atau WebP.</p>
               </div>
-              <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-                <div style="max-width: 140px;" class="form-group-argon">
-                  <label class="label-argon" for="slide_sort">Urutan</label>
-                  <input type="number" class="input-argon" name="slide_sort" id="slide_sort" value="1">
-                </div>
-                <button type="submit" class="btn-argon btn-primary-argon">
-                  <iconify-icon icon="lucide:plus"></iconify-icon> Tambah Slide
-                </button>
-              </div>
-            </form>
-          </div>
+            </div>
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">
+                <iconify-icon icon="lucide:plus" aria-hidden="true"></iconify-icon> Tambah slide
+              </button>
+            </div>
+          </form>
         </div>
 
-        <div class="card-argon">
-          <div class="card-header-argon">
-            <h3>Daftar Agenda Aktif</h3>
+        <div class="card">
+          <div class="card-header">
+            <h2>Agenda aktif</h2>
           </div>
-          <div class="table-responsive">
-            <table class="table-argon">
+          <div class="table-wrap">
+            <table class="table">
               <thead>
                 <tr>
-                  <th style="width: 70px;">Urut</th>
-                  <th>Judul</th>
-                  <th style="width: 110px;">Tipe</th>
-                  <th style="width: 90px;">Durasi</th>
-                  <th style="width: 100px;">Aksi</th>
+                  <th scope="col" class="col-num">Urut</th>
+                  <th scope="col">Judul</th>
+                  <th scope="col">Tipe</th>
+                  <th scope="col" class="col-num">Durasi</th>
+                  <th scope="col" class="col-actions"><span class="sr-only">Aksi</span></th>
                 </tr>
               </thead>
               <tbody id="table-slides"></tbody>
@@ -482,130 +411,149 @@
       </section>
 
       <!-- TAB 6: JUM'AT -->
-      <section class="tab-content" id="tab-jumat">
-        <form id="form-jumat">
-          <div class="card-argon">
-            <div class="card-header-argon">
-              <h3>Petugas Sholat Jum'at</h3>
+      <section class="tab-content" id="tab-jumat" aria-labelledby="h-jumat" hidden>
+        <form id="form-jumat" novalidate>
+          <div class="card card-narrow">
+            <div class="card-header">
+              <h2 id="h-jumat">Petugas sholat Jum'at</h2>
+              <p>Ditampilkan sebagai slide "Petugas Jum'at" dan di ringkasan panel ini.</p>
             </div>
-            <div class="card-body-argon">
-              <div class="form-group-argon">
-                <label class="label-argon" for="jumat_tanggal">Tanggal Jum'at</label>
-                <input type="text" class="input-argon" id="jumat_tanggal" name="jumat_tanggal" placeholder="Contoh: Jum'at, 20 November 2026">
+            <div class="card-body">
+              <div class="field">
+                <label for="jumat_tanggal">Tanggal Jum'at</label>
+                <input type="text" class="input" id="jumat_tanggal" name="jumat_tanggal" placeholder="Contoh: Jum'at, 20 November 2026">
               </div>
-              <div class="form-grid-3">
-                <div class="form-group-argon">
-                  <label class="label-argon" for="jumat_khatib">Khatib</label>
-                  <input type="text" class="input-argon" id="jumat_khatib" name="jumat_khatib">
+              <div class="field">
+                <label for="jumat_khatib">Khatib</label>
+                <input type="text" class="input" id="jumat_khatib" name="jumat_khatib">
+              </div>
+              <div class="form-grid form-grid-2">
+                <div class="field">
+                  <label for="jumat_imam">Imam</label>
+                  <input type="text" class="input" id="jumat_imam" name="jumat_imam">
                 </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="jumat_imam">Imam</label>
-                  <input type="text" class="input-argon" id="jumat_imam" name="jumat_imam">
-                </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="jumat_muadzin">Muadzin</label>
-                  <input type="text" class="input-argon" id="jumat_muadzin" name="jumat_muadzin">
+                <div class="field">
+                  <label for="jumat_muadzin">Muadzin</label>
+                  <input type="text" class="input" id="jumat_muadzin" name="jumat_muadzin">
                 </div>
               </div>
-
-              <button type="submit" class="btn-argon btn-primary-argon">
-                <iconify-icon icon="lucide:check"></iconify-icon> Simpan Data Jum'at
+            </div>
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">
+                <iconify-icon icon="lucide:check" aria-hidden="true"></iconify-icon> Simpan petugas
               </button>
             </div>
           </div>
         </form>
       </section>
 
-      <!-- TAB 7: GAMBAR BACKGROUND & TEMA (FITUR GANTI BACKGROUND TV) -->
-      <section class="tab-content" id="tab-bg-theme">
-        <div class="card-argon">
-          <div class="card-header-argon">
-            <h3>Ganti Gambar Background Layar TV</h3>
-          </div>
-          <div class="card-body-argon">
-            <div style="margin-bottom: 20px;">
-              <label class="label-argon">Preview Background Saat Ini</label>
-              <div style="width: 100%; height: 220px; border-radius: 8px; border: 1px solid #dee2e6; overflow: hidden; position: relative; margin-bottom: 14px;">
-                <img id="bg-preview-img" src="/uploads/default_bg.jpg" alt="Background TV" style="width: 100%; height: 100%; object-fit: cover;">
+      <!-- TAB 7: BACKGROUND & AKUN -->
+      <section class="tab-content" id="tab-bg-theme" aria-labelledby="h-bg" hidden>
+        <div class="card">
+          <div class="bg-layout">
+            <figure class="bg-preview">
+              <img id="bg-preview-img" src="/uploads/default_bg.jpg" alt="Pratinjau foto latar layar TV saat ini">
+              <figcaption>Latar yang sedang tampil di TV</figcaption>
+            </figure>
+
+            <div class="bg-controls">
+              <div class="card-header card-header-flush">
+                <h2 id="h-bg">Foto latar layar TV</h2>
+                <p>Gunakan foto 16:9 agar tidak terpotong.</p>
               </div>
-              <label class="label-argon">Pilihan Cepat Preset Gambar:</label>
-              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button type="button" class="btn-argon btn-outline-argon btn-preset-bg" data-url="/uploads/kaaba_1.jpg">
-                  <iconify-icon icon="lucide:image"></iconify-icon> Ka'bah Panorama (Makkah)
+
+              <fieldset class="preset-group">
+                <legend>Preset cepat</legend>
+                <div class="preset-list">
+                  <button type="button" class="btn btn-secondary btn-preset-bg" data-url="/uploads/kaaba_1.jpg">Ka'bah panorama</button>
+                  <button type="button" class="btn btn-secondary btn-preset-bg" data-url="/uploads/kaaba_2.jpg">Ka'bah pelataran</button>
+                  <button type="button" class="btn btn-secondary btn-preset-bg" data-url="/uploads/nabawi.jpg">Masjid Nabawi</button>
+                </div>
+              </fieldset>
+
+              <form id="form-upload-bg" class="upload-row" novalidate>
+                <div class="field">
+                  <label for="bg_file">Unggah foto baru</label>
+                  <input type="file" class="input input-file" id="bg_file" accept="image/*" required>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                  <iconify-icon icon="lucide:upload" aria-hidden="true"></iconify-icon> Unggah &amp; terapkan
                 </button>
-                <button type="button" class="btn-argon btn-outline-argon btn-preset-bg" data-url="/uploads/kaaba_2.jpg">
-                  <iconify-icon icon="lucide:image"></iconify-icon> Ka'bah Pelataran
-                </button>
-                <button type="button" class="btn-argon btn-outline-argon btn-preset-bg" data-url="/uploads/nabawi.jpg">
-                  <iconify-icon icon="lucide:image"></iconify-icon> Masjid Nabawi (Madinah)
-                </button>
+              </form>
+            </div>
+          </div>
+
+          <div class="card-divider" role="presentation"></div>
+
+          <form id="form-bg-settings" novalidate>
+            <div class="card-body">
+              <div class="form-grid form-grid-2-1">
+                <div class="field">
+                  <label for="tv_bg_image">Alamat berkas latar</label>
+                  <input type="text" class="input" id="tv_bg_image" name="tv_bg_image">
+                </div>
+                <div class="field">
+                  <label for="tv_bg_overlay">Kegelapan overlay (0 – 0,8)</label>
+                  <input type="number" class="input" id="tv_bg_overlay" name="tv_bg_overlay" step="0.05" min="0" max="0.8">
+                </div>
               </div>
             </div>
-
-            <form id="form-upload-bg" style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #e9ecef;">
-              <div class="form-group-argon">
-                <label class="label-argon" for="bg_file">Unggah Gambar Latar Baru (JPG/PNG/WebP 16:9)</label>
-                <input type="file" class="input-argon" id="bg_file" accept="image/*" required>
-              </div>
-              <button type="submit" class="btn-argon btn-primary-argon">
-                <iconify-icon icon="lucide:upload"></iconify-icon> Unggah & Terapkan Background
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">
+                <iconify-icon icon="lucide:check" aria-hidden="true"></iconify-icon> Simpan pengaturan latar
               </button>
-            </form>
-
-            <form id="form-bg-settings">
-              <div class="form-grid-2">
-                <div class="form-group-argon">
-                  <label class="label-argon" for="tv_bg_image">URL Berkas Background</label>
-                  <input type="text" class="input-argon" id="tv_bg_image" name="tv_bg_image">
-                </div>
-                <div class="form-group-argon">
-                  <label class="label-argon" for="tv_bg_overlay">Tingkat Kegelapan Overlay (0.0 s/d 0.8)</label>
-                  <input type="number" class="input-argon" id="tv_bg_overlay" name="tv_bg_overlay" step="0.05" min="0" max="0.8">
-                </div>
-              </div>
-
-              <div class="form-group-argon">
-                <label class="label-argon" for="new_password">Kata Sandi Baru (Opsional)</label>
-                <input type="password" class="input-argon" id="new_password" name="new_password" placeholder="Minimal 4 karakter">
-              </div>
-
-              <button type="submit" class="btn-argon btn-primary-argon">
-                <iconify-icon icon="lucide:check"></iconify-icon> Simpan Pengaturan Background & Password
-              </button>
-            </form>
-          </div>
+            </div>
+          </form>
         </div>
+
+        <form id="form-password" novalidate>
+          <div class="card card-narrow">
+            <div class="card-header">
+              <h2>Kata sandi panel</h2>
+              <p>Berlaku untuk login berikutnya.</p>
+            </div>
+            <div class="card-body">
+              <div class="field">
+                <label for="new_password">Kata sandi baru</label>
+                <input type="password" class="input" id="new_password" name="new_password" minlength="4" required autocomplete="new-password" aria-describedby="pw-hint">
+                <p class="hint" id="pw-hint">Minimal 4 karakter.</p>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button type="submit" class="btn btn-primary">
+                <iconify-icon icon="lucide:key-round" aria-hidden="true"></iconify-icon> Ganti kata sandi
+              </button>
+            </div>
+          </div>
+        </form>
       </section>
 
       <!-- TAB 8: MONITORING TV -->
-      <section class="tab-content" id="tab-monitoring">
-        <div class="card-argon">
-          <div class="card-header-argon">
-            <h3>Aksi Remote TV</h3>
+      <section class="tab-content" id="tab-monitoring" aria-labelledby="h-monitor" hidden>
+        <div class="card">
+          <div class="card-header card-header-row">
+            <div>
+              <h2 id="h-monitor">Google TV terhubung</h2>
+              <p>Diperbarui setiap 10 detik.</p>
+            </div>
+            <div class="btn-row">
+              <button type="button" class="btn btn-secondary" data-tv-action="test-beep">
+                <iconify-icon icon="lucide:volume-2" aria-hidden="true"></iconify-icon> Tes bip di semua TV
+              </button>
+              <button type="button" class="btn btn-secondary" data-tv-action="reload">
+                <iconify-icon icon="lucide:refresh-cw" aria-hidden="true"></iconify-icon> Muat ulang semua TV
+              </button>
+            </div>
           </div>
-          <div class="card-body-argon" style="display:flex; gap:12px;">
-            <button type="button" class="btn-argon btn-primary-argon" onclick="triggerTvAction('test-beep')">
-              <iconify-icon icon="lucide:volume-2"></iconify-icon> Test Bip di TV
-            </button>
-            <button type="button" class="btn-argon btn-secondary-argon" onclick="triggerTvAction('reload')">
-              <iconify-icon icon="lucide:refresh-cw"></iconify-icon> Reload TV
-            </button>
-          </div>
-        </div>
-
-        <div class="card-argon">
-          <div class="card-header-argon">
-            <h3>Google TV Terhubung</h3>
-          </div>
-          <div class="table-responsive">
-            <table class="table-argon">
+          <div class="table-wrap">
+            <table class="table">
               <thead>
                 <tr>
-                  <th>Perangkat</th>
-                  <th>IP</th>
-                  <th>Resolusi</th>
-                  <th>Status</th>
-                  <th>Aksi</th>
+                  <th scope="col">Perangkat</th>
+                  <th scope="col">IP</th>
+                  <th scope="col">Resolusi</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" class="col-actions"><span class="sr-only">Aksi</span></th>
                 </tr>
               </thead>
               <tbody id="table-tv-clients"></tbody>
@@ -617,7 +565,7 @@
     </main>
   </div>
 
-  <div class="toast-argon" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="/js/admin.js"></script>
 </body>

@@ -3,201 +3,183 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - AdhanCast</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&display=swap">
-  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <title>Masuk — AdhanCast</title>
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 rx=%225%22 fill=%22%230F766E%22/><path d=%22M6 19v-6a6 6 0 0 1 12 0v6z%22 fill=%22%23fff%22/></svg>">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Open Sans', sans-serif; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      background-color: #172b4d;
+      font-family: var(--font-body);
+      background: var(--page);
+      color: var(--text);
       min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+      -webkit-font-smoothing: antialiased;
+    }
+    .panel-brand {
+      background: var(--brand);
+      color: #FFFFFF;
+      padding: 48px 56px;
       display: flex;
       flex-direction: column;
-      position: relative;
+      justify-content: space-between;
     }
-    .header-bg {
-      background: linear-gradient(87deg, #5e72e4 0, #825ee4 100%);
-      padding: 60px 20px 130px 20px;
-      text-align: center;
-      color: #ffffff;
-      position: relative;
-    }
-    .header-bg h1 {
-      font-size: 26px;
-      font-weight: 800;
+    .wordmark {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
       letter-spacing: -0.02em;
-      text-transform: uppercase;
     }
-    .separator-skew {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      overflow: hidden;
-      line-height: 0;
+    .wordmark svg { width: 32px; height: 32px; }
+    .panel-brand h1 {
+      font-family: var(--font-display);
+      font-size: clamp(30px, 3.4vw, 44px);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      max-width: 14ch;
     }
-    .separator-skew svg {
-      width: 100%;
-      height: 60px;
-      fill: #172b4d;
-    }
-    .main-content {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: -80px;
-      padding: 0 20px 40px 20px;
-      z-index: 10;
-    }
-    .card-login {
-      background: #f4f5f7;
-      border-radius: 8px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 15px 35px rgba(50, 50, 93, 0.2), 0 5px 15px rgba(0, 0, 0, 0.17);
-      overflow: hidden;
-    }
-    .card-header {
-      background: #ffffff;
-      padding: 22px;
-      text-align: center;
-      border-bottom: 1px solid #e9ecef;
-    }
-    .brand-circle {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: linear-gradient(87deg, #5e72e4 0, #825ee4 100%);
-      margin: 0 auto 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 12px rgba(94, 114, 228, 0.4);
-      color: #ffffff;
-      font-size: 22px;
-    }
-    .card-header h2 {
+    .panel-brand p {
+      margin-top: 14px;
       font-size: 16px;
-      font-weight: 700;
-      color: #32325d;
+      line-height: 1.55;
+      max-width: 40ch;
     }
-    .card-body {
-      padding: 28px 24px;
-    }
-    .form-group {
-      margin-bottom: 18px;
-    }
-    .form-group label {
-      display: block;
-      font-size: 11.5px;
-      font-weight: 700;
-      color: #525f7f;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      margin-bottom: 6px;
-    }
-    .input-box {
-      width: 100%;
-      padding: 10px 12px;
-      background: #ffffff;
-      border: 1px solid #dee2e6;
-      border-radius: 6px;
-      font-size: 13.5px;
-      color: #495057;
-      outline: none;
-      box-shadow: 0 1px 3px rgba(50, 50, 93, 0.08);
-      transition: all 0.15s ease;
-    }
-    .input-box:focus {
-      border-color: #5e72e4;
-      box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
-    }
-    .btn-login {
-      width: 100%;
-      padding: 11px;
-      background: #5e72e4;
-      color: #ffffff;
-      border: none;
-      border-radius: 6px;
-      font-size: 13.5px;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
-      transition: all 0.15s ease;
-      margin-top: 6px;
-    }
-    .btn-login:hover {
-      background: #4c63e2;
-    }
-    .error-alert {
-      background: #fee2e2;
-      border: 1px solid #f87171;
-      color: #b91c1c;
-      padding: 9px 12px;
-      border-radius: 6px;
-      font-size: 12.5px;
-      font-weight: 600;
-      margin-bottom: 18px;
-      display: none;
-    }
-    .footer-links {
+    .panel-brand small { font-size: 14px; }
+
+    main {
       display: flex;
-      justify-content: center;
-      margin-top: 20px;
+      align-items: center;
+      padding: 48px 64px;
     }
-    .footer-links a {
-      color: #adb5bd;
-      font-size: 12.5px;
-      font-weight: 600;
-      text-decoration: none;
-      transition: color 0.15s;
+    .login-box { width: 100%; max-width: 360px; }
+    .login-box h2 {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
     }
-    .footer-links a:hover {
-      color: #ffffff;
+    .login-box .lead { color: var(--muted); margin-top: 4px; font-size: 15px; }
+    form { margin-top: 28px; display: grid; gap: 16px; }
+    .field { display: grid; gap: 6px; }
+    label { font-size: 14px; font-weight: 500; }
+    .input {
+      width: 100%;
+      min-height: 42px;
+      padding: 8px 12px;
+      border: 1px solid var(--control-border);
+      border-radius: var(--r-control);
+      background: var(--card);
+      font: inherit;
+      font-size: 15px;
+      color: var(--text);
+      transition: border-color var(--t-hover) ease, box-shadow var(--t-hover) ease;
+    }
+    .input:focus { outline: none; border-color: var(--brand); box-shadow: var(--focus-ring); }
+    .input[aria-invalid="true"] { border-color: var(--danger); }
+    .btn {
+      min-height: 42px;
+      border: 0;
+      border-radius: var(--r-control);
+      background: var(--brand);
+      color: #FFFFFF;
+      font: inherit;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color var(--t-hover) ease;
+    }
+    .btn:hover { background: var(--brand-strong); }
+    .btn:disabled { opacity: 0.6; cursor: progress; }
+    .error-alert {
+      display: none;
+      align-items: flex-start;
+      gap: 8px;
+      background: var(--danger-soft);
+      border: 1px solid #FECACA;
+      color: var(--danger);
+      padding: 10px 12px;
+      border-radius: var(--r-control);
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .error-alert.show { display: flex; }
+    .error-alert::before {
+      content: "!";
+      flex: 0 0 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--danger);
+      color: #FFFFFF;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 18px;
+      text-align: center;
+    }
+    .alt-link {
+      display: inline-block;
+      margin-top: 24px;
+      color: var(--brand);
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      transition: color var(--t-hover) ease;
+    }
+    .alt-link:hover { color: var(--brand-strong); }
+
+    @media (max-width: 800px) {
+      body { grid-template-columns: 1fr; }
+      .panel-brand { padding: 24px 16px 28px; gap: 28px; }
+      .panel-brand small { display: none; }
+      main { padding: 32px 16px 48px; align-items: flex-start; }
     }
   </style>
 </head>
 <body>
-  <div class="header-bg">
-    <h1>AdhanCast Console</h1>
-    <div class="separator-skew">
-      <svg viewBox="0 0 2560 100" preserveAspectRatio="none">
-        <polygon points="2560 0 2560 100 0 100"></polygon>
+  <header class="panel-brand">
+    <div class="wordmark">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="6" fill="#FFFFFF"/>
+        <path d="M9 25v-8a7 7 0 0 1 14 0v8z" fill="#0F766E"/>
+        <path d="M13 25v-5a3 3 0 0 1 6 0v5z" fill="#FFFFFF"/>
       </svg>
+      AdhanCast
     </div>
-  </div>
-
-  <div class="main-content">
-    <div class="card-login">
-      <div class="card-header">
-        <div class="brand-circle">
-          <iconify-icon icon="lucide:lock"></iconify-icon>
-        </div>
-        <h2>Otorisasi Pengurus</h2>
-      </div>
-
-      <div class="card-body">
-        <div class="error-alert" id="error-msg"></div>
-
-        <form id="login-form">
-          <div class="form-group">
-            <label for="password">Kata Sandi</label>
-            <input type="password" class="input-box" id="password" placeholder="••••••••" required autofocus>
-          </div>
-          <button type="submit" class="btn-login" id="btn-submit">Masuk</button>
-        </form>
-
-        <div class="footer-links">
-          <a href="/tv">Buka Layar Google TV →</a>
-        </div>
-      </div>
+    <div>
+      <h1>Panel pengurus layar masjid</h1>
+      <p>Atur lokasi hisab, timer iqomah, agenda yayasan dan running text yang tampil di Google TV.</p>
     </div>
-  </div>
+    <small>Perubahan langsung tersinkron ke semua TV yang terhubung.</small>
+  </header>
+
+  <main>
+    <div class="login-box">
+      <h2>Masuk</h2>
+      <p class="lead">Gunakan kata sandi pengurus.</p>
+
+      <form id="login-form" novalidate>
+        <div class="error-alert" id="error-msg" role="alert"></div>
+        <div class="field">
+          <label for="password">Kata sandi</label>
+          <input type="password" class="input" id="password" autocomplete="current-password" required autofocus>
+        </div>
+        <button type="submit" class="btn" id="btn-submit">Masuk ke panel</button>
+      </form>
+
+      <a class="alt-link" href="/tv">Buka layar TV tanpa masuk</a>
+    </div>
+  </main>
 
   <script>
     const form = document.getElementById('login-form');
     const errBox = document.getElementById('error-msg');
+    const pwInput = document.getElementById('password');
+    const submitBtn = document.getElementById('btn-submit');
 
     const token = localStorage.getItem('azan_admin_token');
     if (token) {
@@ -208,11 +190,29 @@
       }).catch(() => {});
     }
 
+    function showError(msg) {
+      errBox.textContent = msg;
+      errBox.classList.add('show');
+      pwInput.setAttribute('aria-invalid', 'true');
+      pwInput.setAttribute('aria-describedby', 'error-msg');
+    }
+
+    pwInput.addEventListener('input', () => {
+      errBox.classList.remove('show');
+      pwInput.removeAttribute('aria-invalid');
+      pwInput.removeAttribute('aria-describedby');
+    });
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      errBox.style.display = 'none';
-      const password = document.getElementById('password').value;
+      const password = pwInput.value;
+      if (!password) {
+        showError('Kata sandi wajib diisi.');
+        pwInput.focus();
+        return;
+      }
 
+      submitBtn.disabled = true;
       try {
         const res = await fetch('/api/admin/login', {
           method: 'POST',
@@ -224,12 +224,13 @@
           localStorage.setItem('azan_admin_token', data.token);
           window.location.href = '/admin';
         } else {
-          errBox.innerText = data.error || 'Kata sandi salah';
-          errBox.style.display = 'block';
+          showError(data.error || 'Kata sandi salah.');
+          pwInput.focus();
         }
       } catch (err) {
-        errBox.innerText = 'Gagal tersambung';
-        errBox.style.display = 'block';
+        showError('Gagal tersambung ke server. Periksa koneksi lalu coba lagi.');
+      } finally {
+        submitBtn.disabled = false;
       }
     });
   </script>

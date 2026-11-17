@@ -1,35 +1,39 @@
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800;900&display=swap');
+/*
+ * AdhanCast TV display.
+ * Layout unchanged from the previous version; restyled to the shared tokens.
+ * Sizing: 1rem = 14px on a 960x540 viewport and scales with the screen,
+ * so the same layout fills any 16:9 TV without breakpoints.
+ */
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { font-size: min(1.4583vw, 2.5926vh); }
 
 body {
-  font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-body);
+  font-weight: 400;
   height: 100vh;
   width: 100vw;
   overflow: hidden;
   user-select: none;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   position: relative;
-  background-color: #000000;
+  background-color: var(--ink);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
 
-/* FULLSCREEN BACKGROUND IMAGE LAYER */
+iconify-icon { display: inline-flex; }
+
+/* BACKGROUND PHOTO */
 .tv-background-layer {
   position: absolute;
   inset: 0;
   background-image: url('/uploads/default_bg.jpg');
   background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
+  background-position: center;
   z-index: 1;
-  transition: background-image 0.6s ease-in-out;
 }
 
 .tv-background-overlay {
@@ -38,165 +42,182 @@ body {
   background-color: rgba(0, 0, 0, 0.22);
   z-index: 2;
   pointer-events: none;
-  transition: background-color 0.4s ease;
 }
 
-/* TOP HEADER: White Frosted Glass Banner (Gambar 2 Reference) */
+/* HEADER — solid surface, brand rule on the bottom edge */
 .tv-header-bar {
   position: relative;
   z-index: 10;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(12px);
-  padding: 10px 36px;
+  background: var(--card);
+  border-bottom: 0.25rem solid var(--brand);
+  padding: 0.7rem 2.6rem;
   display: grid;
-  grid-template-columns: 200px 1fr 260px;
+  grid-template-columns: 15rem 1fr 18.5rem;
   align-items: center;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.28);
-  border-bottom: 2px solid rgba(0, 0, 0, 0.06);
 }
 
-/* Left: Monumental Digital Clock (Gambar 2 Reference: 07:48 format) */
 .header-clock {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
+  gap: 0.2rem;
 }
 
-.header-clock .clock-main {
-  font-size: 54px;
-  font-weight: 900;
+.clock-main {
+  font-family: var(--font-display);
+  font-size: 3.9rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: #111827;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.03em;
   line-height: 1;
+  color: var(--text);
 }
 
-/* Center: Mosque / Foundation Name & Address */
+.clock-sec {
+  font-size: 1.1rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--brand);
+  margin-top: 0.35rem;
+}
+
 .header-mosque {
   text-align: center;
-  padding: 0 16px;
+  padding: 0 1rem;
+  min-width: 0;
 }
 
 .header-mosque h1 {
-  font-size: 24px;
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
   letter-spacing: -0.01em;
-  color: #111827;
   line-height: 1.15;
   text-transform: uppercase;
+  color: var(--text);
 }
 
 .header-mosque p {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #4b5563;
-  margin-top: 2px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--muted);
+  margin-top: 0.15rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Right: Gregorian & Hijri Calendar */
 .header-calendar {
   text-align: right;
   display: flex;
   flex-direction: column;
+  gap: 0.1rem;
 }
 
 .header-calendar .gregorian {
-  font-size: 17px;
-  font-weight: 800;
-  color: #111827;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .header-calendar .hijri {
-  font-size: 14.5px;
-  font-weight: 600;
-  color: #4b5563;
-  margin-top: 1px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--brand);
 }
 
-/* TOP FLOATING SUB-BAR (Gambar 2 Reference) */
+/* STATUS BAR — solid chips, no blur */
 .tv-sub-bar {
   position: relative;
   z-index: 10;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 36px 0 36px;
+  padding: 0.85rem 2.6rem 0;
 }
 
-.sub-bar-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.tv-pill-badge {
-  background: rgba(0, 0, 0, 0.58);
-  backdrop-filter: blur(8px);
-  color: #ffffff;
-  height: 32px;
-  padding: 0 10px;
-  border-radius: 20px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.tv-pill-badge.pill-mode {
-  padding: 0 14px;
-  font-size: 13px;
-  font-weight: 700;
-}
-
+.sub-bar-left,
 .sub-bar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.55rem;
 }
 
-/* FLOATING RED BADGE (Gambar 2 Reference: "Ramadhan -90 Hari" or Countdown) */
-.tv-floating-badge {
-  background: #ea3943;
-  color: #ffffff;
-  padding: 6px 18px;
-  border-radius: 24px;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  box-shadow: 0 4px 14px rgba(234, 57, 67, 0.45);
+.tv-chip {
+  height: 2.3rem;
+  padding: 0 0.75rem;
+  border-radius: var(--r-control);
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #FFFFFF;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  gap: 0.4rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.tv-chip[data-state="offline"] {
+  background: var(--danger);
+}
+
+.tv-chip-button {
+  cursor: pointer;
+  transition: background-color var(--t-hover) ease;
+}
+
+.tv-chip-button:hover { background: rgba(15, 23, 42, 1); }
+
+.tv-countdown {
+  height: 2.3rem;
+  display: inline-flex;
+  align-items: stretch;
+  border-radius: var(--r-control);
+  overflow: hidden;
+  font-size: 1rem;
+}
+
+.tv-countdown .countdown-label {
+  background: var(--urgent);
+  color: #FFFFFF;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  padding: 0 0.8rem;
+}
+
+.tv-countdown .countdown-value {
+  background: var(--card);
+  color: var(--text);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  padding: 0 0.8rem;
 }
 
 .tv-settings-link {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(6px);
-  color: #374151;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: var(--r-control);
+  background: var(--card);
+  color: var(--muted);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  font-size: 1.2rem;
   text-decoration: none;
-  font-size: 17px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s ease;
+  cursor: pointer;
+  transition: color var(--t-hover) ease, background-color var(--t-hover) ease;
 }
 
 .tv-settings-link:hover {
-  transform: rotate(45deg);
-  background: #ffffff;
+  color: var(--brand);
+  background: var(--brand-soft);
 }
 
-/* CENTER VISUAL STAGE */
+/* CENTER STAGE */
 .tv-center-stage {
   position: relative;
   z-index: 10;
@@ -204,178 +225,193 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px 48px;
+  padding: 1.15rem 3.4rem;
   min-height: 0;
 }
 
 .slide-backdrop-box {
-  background: rgba(17, 24, 39, 0.82);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 14px;
-  padding: 24px 38px;
-  max-width: 800px;
+  background: rgba(15, 23, 42, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--r-card);
+  padding: 1.7rem 2.7rem;
+  max-width: 57rem;
   width: 100%;
-  text-align: center;
-  color: #ffffff;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.55);
-  animation: slideFadeIn 0.5s ease;
+  color: #FFFFFF;
+  text-align: left;
+  display: grid;
+  gap: 0.4rem;
 }
 
-@keyframes slideFadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+.slide-backdrop-box.has-image {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  column-gap: 2rem;
+  align-items: center;
+}
+
+.slide-poster {
+  width: 100%;
+  max-height: 22rem;
+  object-fit: contain;
+  border-radius: var(--r-control);
+  grid-row: span 3;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .slide-backdrop-box { animation: slideEnter var(--t-enter) ease-out; }
+}
+
+@keyframes slideEnter {
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.slide-backdrop-box .slide-title {
-  font-size: 24px;
-  font-weight: 800;
-  color: #ffffff;
-  margin-bottom: 6px;
-}
-
-.slide-backdrop-box .slide-subtitle {
-  font-size: 14.5px;
-  font-weight: 600;
-  color: #38bdf8;
-  margin-bottom: 12px;
-}
-
-.slide-backdrop-box .slide-text {
-  font-size: 16.5px;
-  line-height: 1.55;
-  color: #e2e8f0;
-  white-space: pre-line;
-}
-
-.slide-backdrop-box .jumat-roster-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-top: 14px;
-}
-
-.jumat-box {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 10px;
-  border-radius: 8px;
-}
-
-.jumat-box span {
-  font-size: 11px;
-  font-weight: 700;
+.slide-kicker {
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #38bdf8;
-  display: block;
+  color: var(--brand-on-dark);
 }
 
-.jumat-box h4 {
-  font-size: 15px;
+.slide-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
   font-weight: 700;
-  color: #ffffff;
-  margin-top: 4px;
+  line-height: 1.15;
+  color: #FFFFFF;
 }
 
-/* LOWER FLOATING PRAYER DECK (Gambar 2 Exact Cards) */
+.slide-subtitle {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #CBD5E1;
+}
+
+.slide-text {
+  font-size: 1.2rem;
+  line-height: 1.55;
+  color: #E2E8F0;
+  white-space: pre-line;
+  max-width: 65ch;
+  margin-top: 0.4rem;
+}
+
+.jumat-roster {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  margin-top: 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.jumat-roster div {
+  padding: 0.8rem 1rem 0.2rem 0;
+}
+
+.jumat-roster div + div {
+  padding-left: 1rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.jumat-roster dt {
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--brand-on-dark);
+}
+
+.jumat-roster dd {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-top: 0.2rem;
+}
+
+.jumat-roster div:first-child dd { font-size: 1.55rem; }
+
+/* PRAYER DECK — the next prayer grows to become the focal card */
 .tv-prayer-ribbon {
   position: relative;
   z-index: 10;
-  padding: 0 36px 14px 36px;
+  padding: 0 2.6rem 1rem;
 }
 
 .prayer-cards-deck {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 10px;
+  list-style: none;
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-end;
 }
 
 .prayer-slot-box {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(8px);
-  border-radius: 8px;
-  padding: 8px 6px 14px 6px;
+  flex: 1 1 0;
+  min-width: 0;
+  background: var(--card);
+  border-radius: var(--r-card);
+  padding: 0.6rem 0.5rem 0.7rem;
   text-align: center;
-  position: relative;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 84px;
-  overflow: hidden;
-  transition: all 0.25s ease;
+  min-height: 6rem;
 }
 
-.prayer-slot-box .slot-title {
-  font-size: 14.5px;
-  font-weight: 800;
-  text-transform: capitalize;
-  color: #374151;
+/* Imsak and Syuruq are markers, not prayer times: quieter surface */
+.prayer-slot-box.is-marker {
+  background: var(--subtle);
 }
 
-.prayer-slot-box .slot-hour {
-  font-size: 34px;
-  font-weight: 900;
+.prayer-slot-box.is-marker .slot-hour { color: var(--muted); }
+
+.slot-title {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.slot-hour {
+  font-family: var(--font-display);
+  font-size: 2.45rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: #111827;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   line-height: 1.1;
-  margin-top: 2px;
+  color: var(--text);
 }
 
-/* Bottom colored stripe for inactive cards (Gambar 2 Reference) */
-.prayer-slot-box .slot-stripe {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 6px;
-  border-radius: 0 0 8px 8px;
-}
+.slot-next-label,
+.slot-countdown { display: none; }
 
-.prayer-slot-box.color-imsak .slot-stripe { background-color: #10b981; }
-.prayer-slot-box.color-subuh .slot-stripe { background-color: #3b82f6; }
-.prayer-slot-box.color-terbit .slot-stripe { background-color: #06b6d4; }
-.prayer-slot-box.color-dzuhur .slot-stripe { background-color: #f59e0b; }
-.prayer-slot-box.color-ashar .slot-stripe { background-color: #8b5cf6; }
-.prayer-slot-box.color-maghrib .slot-stripe { background-color: #f97316; }
-.prayer-slot-box.color-isya .slot-stripe { background-color: #4f46e5; }
-
-/* ACTIVE PRAYER SLOT: Vibrant Solid Amber Card (Gambar 2 Highlight) */
 .prayer-slot-box.is-active-slot {
-  background: #ff9800 !important;
-  transform: translateY(-4px);
-  box-shadow: 0 10px 28px rgba(255, 152, 0, 0.55) !important;
-  padding-bottom: 8px;
+  flex-grow: 1.45;
+  background: var(--brand);
+  min-height: 7.4rem;
 }
 
-.prayer-slot-box.is-active-slot .slot-title {
-  color: #ffffff !important;
+.prayer-slot-box.is-active-slot .slot-next-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #FFFFFF;
 }
 
-.prayer-slot-box.is-active-slot .slot-hour {
-  color: #ffffff !important;
-}
+.prayer-slot-box.is-active-slot .slot-title,
+.prayer-slot-box.is-active-slot .slot-hour { color: #FFFFFF; }
+
+.prayer-slot-box.is-active-slot .slot-hour { font-size: 2.9rem; }
 
 .prayer-slot-box.is-active-slot .slot-countdown {
   display: block;
-  font-size: 13px;
-  font-weight: 800;
-  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
-  margin-top: 2px;
-  letter-spacing: 0.04em;
+  color: #FFFFFF;
 }
 
-.prayer-slot-box .slot-countdown {
-  display: none;
-}
-
-.prayer-slot-box.is-active-slot .slot-stripe {
-  display: none;
-}
-
-/* BOTTOM DUAL-TIER RUNNING TICKER (Gambar 2 Reference) */
+/* TICKER — tier 1 scrolls (the page's single ambient motion), tier 2 is static */
 .tv-dual-ticker {
   position: relative;
   z-index: 10;
@@ -383,57 +419,92 @@ body {
   flex-direction: column;
 }
 
-/* Tier 1: Dark Translucent Bar */
-.ticker-tier-dark {
-  background: rgba(0, 0, 0, 0.88);
-  height: 35px;
+.ticker-tier {
+  height: 2.5rem;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.ticker-label {
+  flex: 0 0 auto;
+  width: 8.5rem;
+  display: flex;
+  align-items: center;
+  padding-left: 2.6rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ticker-window {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   overflow: hidden;
-  padding: 0 36px;
+  padding-right: 2.6rem;
 }
 
-.ticker-tier-dark .ticker-scroll {
+.ticker-tier-info { background: rgba(15, 23, 42, 0.94); }
+.ticker-tier-info .ticker-label { background: var(--brand); color: #FFFFFF; }
+
+.ticker-tier-info .ticker-scroll {
   display: inline-block;
   white-space: nowrap;
-  font-size: 14.5px;
-  font-weight: 600;
-  color: #f8fafc;
-  padding-left: 100%;
-  animation: stream-anim 35s linear infinite;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #F8FAFC;
+  padding-left: 1.5rem;
 }
 
-/* Tier 2: Red Accent Bar */
-.ticker-tier-red {
-  background: #e53935;
-  height: 35px;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  padding: 0 36px;
+@media (prefers-reduced-motion: no-preference) {
+  .ticker-tier-info .ticker-scroll {
+    padding-left: 100%;
+    animation: stream-anim var(--ticker-duration, 35s) linear infinite;
+  }
+  .ticker-tier-info:hover .ticker-scroll { animation-play-state: paused; }
 }
 
-.ticker-tier-red .ticker-scroll {
-  display: inline-block;
-  white-space: nowrap;
-  font-size: 14.5px;
-  font-weight: 700;
-  color: #ffffff;
-  padding-left: 100%;
-  animation: stream-anim 30s linear infinite;
+@media (prefers-reduced-motion: reduce) {
+  .ticker-tier-info .ticker-scroll {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
 }
 
 @keyframes stream-anim {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-100%); }
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
 }
 
 .ticker-sep {
-  margin: 0 24px;
-  opacity: 0.7;
+  display: inline-block;
+  width: 0.35rem;
+  height: 0.35rem;
+  margin: 0 1.4rem 0.2rem;
+  border-radius: 50%;
+  background: var(--brand-on-dark);
 }
 
-/* FULLSCREEN OVERLAYS (AZAN, IQOMAH, SALAT) */
+.ticker-tier-reminder { background: var(--urgent); }
+.ticker-tier-reminder .ticker-label { background: var(--urgent-strong); color: #FFFFFF; }
+
+.ticker-static {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity var(--t-enter) ease;
+}
+
+.ticker-static.is-swapping { opacity: 0; transition-duration: var(--t-exit); }
+
+/* FULLSCREEN STATE SCREENS */
 .tv-full-overlay {
   position: fixed;
   inset: 0;
@@ -442,65 +513,75 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  text-align: center;
   opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.4s ease;
+  visibility: hidden;
+  transition: opacity var(--t-exit) ease-in, visibility 0s linear var(--t-exit);
 }
 
 .tv-full-overlay.active {
   opacity: 1;
-  pointer-events: auto;
+  visibility: visible;
+  transition: opacity var(--t-enter) ease-out, visibility 0s;
 }
 
 .overlay-azan {
-  background: rgba(229, 57, 53, 0.95);
-  color: #ffffff;
+  background: var(--urgent);
+  color: #FFFFFF;
 }
 
-.overlay-azan .azan-lead {
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: 0.2em;
+.azan-lead {
+  font-size: 1.7rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
-.overlay-azan .azan-hero {
-  font-size: 110px;
-  font-weight: 900;
-  text-transform: uppercase;
-  margin-top: 10px;
+.azan-hero {
+  font-family: var(--font-display);
+  font-size: 7.8rem;
+  font-weight: 700;
   line-height: 1;
+  margin-top: 0.7rem;
+  text-transform: uppercase;
 }
 
 .overlay-iqomah {
-  background: rgba(17, 24, 39, 0.96);
-  color: #ffffff;
+  background: var(--ink);
+  color: #FFFFFF;
 }
 
-.overlay-iqomah .iqomah-lead {
-  font-size: 32px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #f59e0b;
-}
-
-.overlay-iqomah .iqomah-timer {
-  font-size: 170px;
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-  margin: 16px 0;
-  line-height: 1;
-}
-
-.overlay-salat {
-  background: #000000;
-  text-align: center;
-}
-
-.overlay-salat .salat-text {
-  font-size: 48px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
+.iqomah-lead {
+  font-family: var(--font-display);
+  font-size: 2.3rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #475569;
+  color: var(--brand-on-dark);
+}
+
+.iqomah-timer {
+  font-family: var(--font-display);
+  font-size: 12rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin: 1.1rem 0 1.4rem;
+}
+
+.iqomah-note {
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: #CBD5E1;
+}
+
+.overlay-salat { background: #000000; }
+
+.salat-text {
+  font-family: var(--font-display);
+  font-size: 3.4rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94A3B8; /* 7.9:1 on black */
 }

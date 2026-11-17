@@ -1,6 +1,5 @@
 /**
- * Admin Panel Script for Azan TV Management
- * Creative Tim Argon Dashboard Engine
+ * Admin panel script for AdhanCast (Azan TV management)
  */
 
 const token = localStorage.getItem('azan_admin_token');
@@ -15,48 +14,128 @@ function authHeaders() {
   };
 }
 
+// Escape any stored text before it reaches innerHTML
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+let toastTimer = null;
 function showToast(message, isError = false) {
   const toast = document.getElementById('toast');
-  toast.innerText = message;
-  toast.className = 'toast-argon show' + (isError ? ' error' : '');
-  setTimeout(() => {
-    toast.className = 'toast-argon';
+  toast.textContent = message;
+  toast.className = 'toast show' + (isError ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.className = 'toast';
   }, 3500);
 }
 
-// Tab Switching
-document.querySelectorAll('.nav-item').forEach(item => {
+/* ───────── Tabs ───────── */
+const navItems = document.querySelectorAll('.nav-item');
+navItems.forEach(item => {
   item.addEventListener('click', () => {
-    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    navItems.forEach(i => {
+      i.classList.remove('active');
+      i.removeAttribute('aria-current');
+    });
+    document.querySelectorAll('.tab-content').forEach(t => {
+      t.classList.remove('active');
+      t.hidden = true;
+    });
 
     item.classList.add('active');
-    const tabId = item.dataset.tab;
-    const target = document.getElementById(tabId);
+    item.setAttribute('aria-current', 'page');
+    const target = document.getElementById(item.dataset.tab);
     if (target) {
+      target.hidden = false;
       target.classList.add('active');
     }
   });
 });
 
-// Logout
+/* ───────── Logout ───────── */
 document.getElementById('btn-logout').addEventListener('click', () => {
   localStorage.removeItem('azan_admin_token');
   window.location.href = '/login';
 });
 
-// Load Preset Cities
+/* ───────── Validation states ───────── */
+function setFieldError(input, message) {
+  const field = input.closest('.field');
+  if (!field) return;
+  let err = field.querySelector('.field-error');
+  const errId = (input.id || input.name) + '-error';
+  if (message) {
+    if (!err) {
+      err = document.createElement('p');
+      err.className = 'field-error';
+      err.id = errId;
+      field.appendChild(err);
+    }
+    err.textContent = message;
+    input.setAttribute('aria-invalid', 'true');
+    const describedBy = (input.getAttribute('aria-describedby') || '').split(' ').filter(Boolean);
+    if (!describedBy.includes(errId)) describedBy.push(errId);
+    input.setAttribute('aria-describedby', describedBy.join(' '));
+  } else {
+    if (err) err.remove();
+    input.removeAttribute('aria-invalid');
+    const describedBy = (input.getAttribute('aria-describedby') || '').split(' ').filter(id => id && id !== errId);
+    if (describedBy.length) input.setAttribute('aria-describedby', describedBy.join(' '));
+    else input.removeAttribute('aria-describedby');
+  }
+}
+
+function messageFor(input) {
+  const v = input.validity;
+  if (v.valueMissing) return input.type === 'file' ? 'Pilih berkas terlebih dahulu.' : 'Wajib diisi.';
+  if (v.patternMismatch) return 'Format angka tidak sesuai. Gunakan titik untuk desimal.';
+  if (v.rangeUnderflow) return `Minimal ${input.min}.`;
+  if (v.rangeOverflow) return `Maksimal ${input.max}.`;
+  if (v.tooShort) return `Minimal ${input.minLength} karakter.`;
+  if (v.stepMismatch || v.badInput) return 'Nilai tidak valid.';
+  return input.validationMessage;
+}
+
+// Returns true when the form is valid; otherwise marks fields and focuses the first error
+function validateForm(form) {
+  let firstInvalid = null;
+  form.querySelectorAll('.input').forEach(input => {
+    if (input.checkValidity()) {
+      setFieldError(input, null);
+    } else {
+      setFieldError(input, messageFor(input));
+      if (!firstInvalid) firstInvalid = input;
+    }
+  });
+  if (firstInvalid) firstInvalid.focus();
+  return !firstInvalid;
+}
+
+document.addEventListener('input', (e) => {
+  const input = e.target;
+  if (input.classList && input.classList.contains('input') && input.getAttribute('aria-invalid') === 'true' && input.checkValidity()) {
+    setFieldError(input, null);
+  }
+});
+
+/* ───────── Preset cities ───────── */
 async function loadCities() {
   try {
     const res = await fetch('/api/admin/cities', { headers: authHeaders() });
     if (!res.ok) throw new Error('Auth failed');
     const cities = await res.json();
     const select = document.getElementById('city_preset');
-    select.innerHTML = '<option value="">-- Pilih Preset Kota Acuan --</option>';
+    select.innerHTML = '<option value="">Pilih kota…</option>';
     cities.forEach(c => {
       const opt = document.createElement('option');
       opt.value = JSON.stringify(c);
-      opt.innerText = `${c.name} (GMT+${c.timezone})`;
+      opt.textContent = `${c.name} (GMT+${c.timezone})`;
       select.appendChild(opt);
     });
 
@@ -73,55 +152,98 @@ async function loadCities() {
   }
 }
 
-// Update Top 4 Argon KPI Stat Cards
+/* ───────── Overview: next prayer + today's schedule ───────── */
+let overviewData = null;
+
+const SCHEDULE = [
+  { key: 'subuh', name: 'Subuh' },
+  { key: 'terbit', name: 'Syuruq' },
+  { key: 'dzuhur', name: 'Dzuhur' },
+  { key: 'ashar', name: 'Ashar' },
+  { key: 'maghrib', name: 'Maghrib' },
+  { key: 'isya', name: 'Isya' },
+  { key: 'imsak', name: 'Imsak' },
+  { key: 'dhuha', name: 'Dhuha' }
+];
+
+function toSec(t) {
+  if (!t) return null;
+  const [h, m] = t.split(':').map(Number);
+  return h * 3600 + m * 60;
+}
+
+function renderTodaySchedule(pt) {
+  const list = document.getElementById('today-schedule');
+  const order = ['imsak', 'subuh', 'terbit', 'dhuha', 'dzuhur', 'ashar', 'maghrib', 'isya'];
+  list.innerHTML = order
+    .filter(k => pt[k])
+    .map(k => {
+      const name = SCHEDULE.find(s => s.key === k).name;
+      return `<li data-key="${k}"><span class="ts-name">${name}</span><span class="ts-time">${escapeHtml(pt[k])}</span></li>`;
+    })
+    .join('');
+}
+
+function updateNextPrayer() {
+  if (!overviewData) return;
+  const pt = overviewData.prayerTimes;
+  const now = new Date(Date.now() + (overviewData.skew || 0));
+  const currentSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+
+  const points = ['imsak', 'subuh', 'terbit', 'dhuha', 'dzuhur', 'ashar', 'maghrib', 'isya']
+    .filter(k => pt[k])
+    .map(k => ({ key: k, name: SCHEDULE.find(s => s.key === k).name, time: pt[k], sec: toSec(pt[k]) }));
+
+  let next = points.find(p => p.sec > currentSec);
+  let diff;
+  if (next) {
+    diff = next.sec - currentSec;
+  } else {
+    const t = overviewData.tomorrowPrayerTimes?.imsak || pt.imsak;
+    next = { key: 'imsak', name: 'Imsak besok', time: t, sec: toSec(t) };
+    diff = next.sec + 86400 - currentSec;
+  }
+
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  const s = diff % 60;
+  const pad = n => String(n).padStart(2, '0');
+
+  document.getElementById('kpi-next-prayer').textContent = `${next.name} ${next.time}`;
+  document.getElementById('kpi-next-cd').textContent = `${h ? h + ' jam ' : ''}${pad(m)} menit ${pad(s)} detik lagi`;
+
+  document.querySelectorAll('#today-schedule li').forEach(li => {
+    li.classList.toggle('is-next', li.dataset.key === next.key && next.name !== 'Imsak besok');
+  });
+}
+
 async function updateKpiCards() {
   try {
     const res = await fetch('/api/data?t=' + Date.now());
     if (!res.ok) return;
     const data = await res.json();
     const s = data.settings;
-    const pt = data.prayerTimes;
 
-    // 1. Next Prayer
-    const now = new Date();
-    const currentSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-    const prayers = [
-      { name: 'Imsak', time: pt.imsak },
-      { name: 'Subuh', time: pt.subuh },
-      { name: 'Syuruq', time: pt.terbit },
-      { name: 'Dhuha', time: pt.dhuha },
-      { name: 'Dzuhur', time: pt.dzuhur },
-      { name: 'Ashar', time: pt.ashar },
-      { name: 'Maghrib', time: pt.maghrib },
-      { name: 'Isya', time: pt.isya }
-    ];
+    overviewData = {
+      prayerTimes: data.prayerTimes,
+      tomorrowPrayerTimes: data.tomorrowPrayerTimes,
+      skew: data.serverTime ? data.serverTime - Date.now() : 0
+    };
+    renderTodaySchedule(data.prayerTimes);
+    updateNextPrayer();
 
-    let next = null;
-    for (const p of prayers) {
-      if (!p.time) continue;
-      const [h, m] = p.time.split(':').map(Number);
-      const pSec = h * 3600 + m * 60;
-      if (pSec > currentSec) {
-        next = p;
-        break;
-      }
-    }
-    if (!next) next = { name: 'Imsak Besok', time: data.tomorrowPrayerTimes?.imsak || pt.imsak };
-    document.getElementById('kpi-next-prayer').innerText = `${next.name} ${next.time}`;
-    document.getElementById('kpi-next-cd').innerText = `Terhitung Presisi`;
+    document.getElementById('kpi-jumat-khatib').textContent = s.jumat_khatib || 'Belum diisi';
+    document.getElementById('kpi-jumat-tgl').textContent = s.jumat_tanggal || "Jum'at pekan ini";
 
-    // 2. Jumat Info
-    document.getElementById('kpi-jumat-khatib').innerText = s.jumat_khatib || 'Khatib -';
-    document.getElementById('kpi-jumat-tgl').innerText = s.jumat_tanggal || "Jum'at Pekan Ini";
-
-    // 3. Konten Display Count
     const textCount = (data.runningTexts || []).length;
-    const slideCount = (data.slides || []).length;
-    document.getElementById('kpi-content-count').innerText = `${slideCount} Slide / ${textCount} Teks`;
+    const slideCount = (data.slides || []).filter(x => x.type !== 'kas').length;
+    document.getElementById('kpi-content-count').textContent = `${slideCount} slide · ${textCount} teks`;
   } catch (e) {}
 }
 
-// Load Settings
+setInterval(updateNextPrayer, 1000);
+
+/* ───────── Settings ───────── */
 async function loadSettings() {
   try {
     const res = await fetch('/api/admin/settings', { headers: authHeaders() });
@@ -131,50 +253,52 @@ async function loadSettings() {
     }
     const data = await res.json();
     const s = data.settings;
+    const set = (id, v) => { document.getElementById(id).value = v; };
+    const def = (v, d) => (v !== undefined && v !== null ? v : d);
 
-    // Mosque & Location
-    document.getElementById('mosque_name').value = s.mosque_name || 'MASJID LUQMANUL HAKIM';
-    document.getElementById('mosque_address').value = s.mosque_address || 'Jl. Gandasoli Kidul No. 42 Ds. Gandasari Kec. Katapang Kab. Bandung, 40921';
-    document.getElementById('city_name').value = s.city_name || 'Bandung';
-    document.getElementById('latitude').value = s.latitude || '-6.9175';
-    document.getElementById('longitude').value = s.longitude || '107.6191';
-    document.getElementById('timezone').value = s.timezone || '7';
-    document.getElementById('elevation').value = s.elevation || '700';
-    document.getElementById('hijri_offset').value = s.hijri_offset || '0';
+    // Mosque & location
+    set('mosque_name', s.mosque_name || 'MASJID LUQMANUL HAKIM');
+    set('mosque_address', s.mosque_address || 'Jl. Gandasoli Kidul No. 42 Ds. Gandasari Kec. Katapang Kab. Bandung, 40921');
+    set('city_name', s.city_name || 'Bandung');
+    set('latitude', s.latitude || '-6.9175');
+    set('longitude', s.longitude || '107.6191');
+    set('timezone', s.timezone || '7');
+    set('elevation', s.elevation || '700');
+    set('hijri_offset', s.hijri_offset || '0');
 
     // Ihtiyat
-    document.getElementById('ihtiyat_imsak').value = s.ihtiyat_imsak || '0';
-    document.getElementById('ihtiyat_subuh').value = s.ihtiyat_subuh !== undefined ? s.ihtiyat_subuh : '2';
-    document.getElementById('ihtiyat_terbit').value = s.ihtiyat_terbit !== undefined ? s.ihtiyat_terbit : '-2';
-    document.getElementById('ihtiyat_dhuha').value = s.ihtiyat_dhuha || '0';
-    document.getElementById('ihtiyat_dzuhur').value = s.ihtiyat_dzuhur !== undefined ? s.ihtiyat_dzuhur : '2';
-    document.getElementById('ihtiyat_ashar').value = s.ihtiyat_ashar !== undefined ? s.ihtiyat_ashar : '2';
-    document.getElementById('ihtiyat_maghrib').value = s.ihtiyat_maghrib !== undefined ? s.ihtiyat_maghrib : '2';
-    document.getElementById('ihtiyat_isya').value = s.ihtiyat_isya !== undefined ? s.ihtiyat_isya : '2';
+    set('ihtiyat_imsak', s.ihtiyat_imsak || '0');
+    set('ihtiyat_subuh', def(s.ihtiyat_subuh, '2'));
+    set('ihtiyat_terbit', def(s.ihtiyat_terbit, '-2'));
+    set('ihtiyat_dhuha', s.ihtiyat_dhuha || '0');
+    set('ihtiyat_dzuhur', def(s.ihtiyat_dzuhur, '2'));
+    set('ihtiyat_ashar', def(s.ihtiyat_ashar, '2'));
+    set('ihtiyat_maghrib', def(s.ihtiyat_maghrib, '2'));
+    set('ihtiyat_isya', def(s.ihtiyat_isya, '2'));
 
-    // Timers & Audio
-    document.getElementById('azan_duration').value = s.azan_duration || '3';
-    document.getElementById('salat_duration').value = s.salat_duration || '15';
-    document.getElementById('iqomah_subuh').value = s.iqomah_subuh || '10';
-    document.getElementById('iqomah_dzuhur').value = s.iqomah_dzuhur || '10';
-    document.getElementById('iqomah_ashar').value = s.iqomah_ashar || '10';
-    document.getElementById('iqomah_maghrib').value = s.iqomah_maghrib || '7';
-    document.getElementById('iqomah_isya').value = s.iqomah_isya || '7';
-    document.getElementById('beep_enabled').value = s.beep_enabled !== undefined ? s.beep_enabled : '1';
+    // Timers & audio
+    set('azan_duration', s.azan_duration || '3');
+    set('salat_duration', s.salat_duration || '15');
+    set('iqomah_subuh', s.iqomah_subuh || '10');
+    set('iqomah_dzuhur', s.iqomah_dzuhur || '10');
+    set('iqomah_ashar', s.iqomah_ashar || '10');
+    set('iqomah_maghrib', s.iqomah_maghrib || '7');
+    set('iqomah_isya', s.iqomah_isya || '7');
+    set('beep_enabled', def(s.beep_enabled, '1'));
 
     // Jumat
-    document.getElementById('jumat_khatib').value = s.jumat_khatib || '';
-    document.getElementById('jumat_imam').value = s.jumat_imam || '';
-    document.getElementById('jumat_muadzin').value = s.jumat_muadzin || '';
-    document.getElementById('jumat_tanggal').value = s.jumat_tanggal || '';
+    set('jumat_khatib', s.jumat_khatib || '');
+    set('jumat_imam', s.jumat_imam || '');
+    set('jumat_muadzin', s.jumat_muadzin || '');
+    set('jumat_tanggal', s.jumat_tanggal || '');
 
-    // Background Image Settings
+    // Background
     const bgUrl = s.tv_bg_image || '/uploads/default_bg.jpg';
-    document.getElementById('tv_bg_image').value = bgUrl;
-    document.getElementById('tv_bg_overlay').value = s.tv_bg_overlay !== undefined ? s.tv_bg_overlay : '0.25';
-    document.getElementById('bg-preview-img').src = bgUrl;
+    set('tv_bg_image', bgUrl);
+    set('tv_bg_overlay', def(s.tv_bg_overlay, '0.25'));
+    setBackgroundPreview(bgUrl);
 
-    document.getElementById('topbar-mosque-name').innerText = s.mosque_name || 'Masjid Kita';
+    document.getElementById('topbar-mosque-name').textContent = s.mosque_name || 'Masjid Kita';
     updateKpiCards();
   } catch (err) {
     console.error('Error load settings:', err);
@@ -182,8 +306,14 @@ async function loadSettings() {
   }
 }
 
-// Save Settings Form
-async function saveSettings(formDataObj) {
+function setBackgroundPreview(url) {
+  document.getElementById('bg-preview-img').src = url;
+  document.querySelectorAll('.btn-preset-bg').forEach(btn => {
+    btn.setAttribute('aria-pressed', btn.dataset.url === url ? 'true' : 'false');
+  });
+}
+
+async function saveSettings(formDataObj, successMessage) {
   try {
     const res = await fetch('/api/admin/settings', {
       method: 'POST',
@@ -192,318 +322,326 @@ async function saveSettings(formDataObj) {
     });
     const data = await res.json();
     if (res.ok) {
-      showToast('Data berhasil diperbarui dan disinkronkan ke TV');
+      showToast(successMessage || 'Tersimpan. TV akan memperbarui tampilan otomatis.');
       loadSettings();
-    } else {
-      showToast(data.error || 'Gagal menyimpan data', true);
+      return true;
     }
+    showToast(data.error || 'Gagal menyimpan data', true);
   } catch (err) {
     showToast('Kesalahan jaringan saat menyimpan', true);
   }
+  return false;
 }
 
-// Bind Forms
-['form-masjid', 'form-ihtiyat', 'form-timers', 'form-jumat', 'form-bg-settings'].forEach(formId => {
+async function withBusy(form, fn) {
+  const btn = form.querySelector('button[type="submit"]');
+  if (btn) btn.disabled = true;
+  try { await fn(); } finally { if (btn) btn.disabled = false; }
+}
+
+['form-masjid', 'form-ihtiyat', 'form-timers', 'form-jumat', 'form-bg-settings', 'form-password'].forEach(formId => {
   const f = document.getElementById(formId);
-  if (f) {
-    f.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const formData = new FormData(f);
-      const obj = Object.fromEntries(formData.entries());
-      saveSettings(obj);
+  if (!f) return;
+  f.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!validateForm(f)) return;
+    const obj = Object.fromEntries(new FormData(f).entries());
+    const msg = formId === 'form-password' ? 'Kata sandi diganti. Gunakan untuk login berikutnya.' : null;
+    withBusy(f, async () => {
+      const ok = await saveSettings(obj, msg);
+      if (ok && formId === 'form-password') f.reset();
     });
-  }
+  });
 });
 
-// Upload Background Photo
-document.getElementById('form-upload-bg').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const fileInput = document.getElementById('bg_file');
-  if (fileInput.files.length === 0) return;
-
+/* ───────── Background upload & presets ───────── */
+async function uploadFile(file) {
   const uploadData = new FormData();
-  uploadData.append('file', fileInput.files[0]);
+  uploadData.append('file', file);
+  const res = await fetch('/api/admin/upload', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token },
+    body: uploadData
+  });
+  const data = await res.json();
+  if (!res.ok || !data.url) throw new Error(data.error || 'Upload gagal');
+  return data.url;
+}
 
-  try {
-    const res = await fetch('/api/admin/upload', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token },
-      body: uploadData
-    });
-    const data = await res.json();
-    if (res.ok && data.url) {
-      document.getElementById('tv_bg_image').value = data.url;
-      document.getElementById('bg-preview-img').src = data.url;
-      // Auto save settings with new background
-      await saveSettings({ tv_bg_image: data.url });
-      showToast('Gambar background TV berhasil diunggah dan diterapkan!');
-    } else {
-      showToast(data.error || 'Gagal mengunggah background', true);
+document.getElementById('form-upload-bg').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const form = e.currentTarget;
+  if (!validateForm(form)) return;
+  const fileInput = document.getElementById('bg_file');
+
+  withBusy(form, async () => {
+    try {
+      const url = await uploadFile(fileInput.files[0]);
+      document.getElementById('tv_bg_image').value = url;
+      setBackgroundPreview(url);
+      await saveSettings({ tv_bg_image: url }, 'Foto latar diunggah dan tampil di TV.');
+      form.reset();
+    } catch (err) {
+      showToast('Gagal mengunggah: ' + err.message, true);
     }
-  } catch (err) {
-    showToast('Kesalahan koneksi saat upload', true);
-  }
+  });
 });
 
-// Preset Background Buttons
 document.querySelectorAll('.btn-preset-bg').forEach(btn => {
   btn.addEventListener('click', async () => {
     const url = btn.dataset.url;
     if (!url) return;
     document.getElementById('tv_bg_image').value = url;
-    document.getElementById('bg-preview-img').src = url;
-    await saveSettings({ tv_bg_image: url });
-    showToast('Preset background berhasil diterapkan ke TV!');
+    setBackgroundPreview(url);
+    await saveSettings({ tv_bg_image: url }, `Latar "${btn.textContent.trim()}" diterapkan ke TV.`);
   });
 });
 
-// Running Texts CRUD
+/* ───────── Running texts ───────── */
+let runningTextCache = [];
+
 async function loadRunningTexts() {
   try {
     const res = await fetch('/api/admin/running-texts', { headers: authHeaders() });
     const texts = await res.json();
+    runningTextCache = texts;
     const tbody = document.getElementById('table-running-texts');
-    tbody.innerHTML = '';
 
     if (texts.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#8898aa; padding: 24px;">Belum ada pengumuman running text.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" class="cell-empty">Belum ada running text. Tambahkan dari formulir di samping.</td></tr>';
       return;
     }
 
-    texts.forEach(item => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="font-weight:700; color:#525f7f;">#${item.sort_order}</td>
-        <td><strong>${item.text}</strong></td>
-        <td>
-          <span class="badge-dot ${item.is_active ? 'active' : 'inactive'}">
-            <i></i> ${item.is_active ? 'Aktif' : 'Nonaktif'}
-          </span>
+    tbody.innerHTML = texts.map(item => `
+      <tr>
+        <td class="col-num cell-mono">${Number(item.sort_order) || 0}</td>
+        <td class="cell-strong">${escapeHtml(item.text)}</td>
+        <td><span class="badge-status ${item.is_active ? 'is-on' : ''}">${item.is_active ? 'Tayang' : 'Disembunyikan'}</span></td>
+        <td class="col-actions">
+          <div class="cell-actions">
+            <button type="button" class="btn btn-secondary btn-sm" data-action="toggle-text" data-id="${Number(item.id)}">
+              ${item.is_active ? 'Sembunyikan' : 'Tayangkan'}
+            </button>
+            <button type="button" class="btn btn-danger btn-sm btn-icon" data-action="delete-text" data-id="${Number(item.id)}" aria-label="Hapus running text">
+              <iconify-icon icon="lucide:trash-2" aria-hidden="true"></iconify-icon>
+            </button>
+          </div>
         </td>
-        <td style="display: flex; gap: 8px;">
-          <button class="btn-argon btn-secondary-argon btn-sm-argon" onclick="toggleRunningText(${item.id}, ${item.is_active ? 0 : 1}, '${encodeURIComponent(item.text)}')">
-            ${item.is_active ? 'Nonaktifkan' : 'Aktifkan'}
-          </button>
-          <button class="btn-argon btn-danger-argon btn-sm-argon" onclick="deleteRunningText(${item.id})">
-            <iconify-icon icon="lucide:trash-2"></iconify-icon>
-          </button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
+      </tr>
+    `).join('');
   } catch (err) {
     console.error('Error load running texts:', err);
   }
 }
 
-document.getElementById('form-add-ticker').addEventListener('submit', async (e) => {
+document.getElementById('form-add-ticker').addEventListener('submit', (e) => {
   e.preventDefault();
+  const form = e.currentTarget;
+  if (!validateForm(form)) return;
   const input = document.getElementById('new-ticker-text');
   const sort = document.getElementById('new-ticker-sort').value;
   const text = input.value.trim();
-  if (!text) return;
 
-  try {
-    const res = await fetch('/api/admin/running-texts', {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({ text, sort_order: parseInt(sort, 10) || 0 })
-    });
-    if (res.ok) {
+  withBusy(form, async () => {
+    try {
+      const res = await fetch('/api/admin/running-texts', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ text, sort_order: parseInt(sort, 10) || 0 })
+      });
+      if (!res.ok) throw new Error();
       input.value = '';
       showToast('Running text ditambahkan');
       loadRunningTexts();
       updateKpiCards();
+    } catch (err) {
+      showToast('Gagal menambahkan running text', true);
     }
-  } catch (err) {
-    showToast('Gagal menambahkan running text', true);
-  }
+  });
 });
 
-window.toggleRunningText = async (id, newActive, textEncoded) => {
+async function toggleRunningText(id) {
+  const item = runningTextCache.find(t => Number(t.id) === id);
+  if (!item) return;
   try {
-    const text = decodeURIComponent(textEncoded);
     await fetch(`/api/admin/running-texts/${id}`, {
       method: 'PUT',
       headers: authHeaders(),
-      body: JSON.stringify({ text, is_active: newActive, sort_order: 0 })
+      body: JSON.stringify({ text: item.text, is_active: item.is_active ? 0 : 1, sort_order: item.sort_order || 0 })
     });
-    showToast('Status running text diubah');
+    showToast(item.is_active ? 'Running text disembunyikan dari TV' : 'Running text tayang di TV');
     loadRunningTexts();
   } catch (err) {
     showToast('Gagal mengubah status', true);
   }
-};
+}
 
-window.deleteRunningText = async (id) => {
-  if (!confirm('Hapus teks ini?')) return;
+async function deleteRunningText(id) {
+  if (!confirm('Hapus running text ini dari TV?')) return;
   try {
-    await fetch(`/api/admin/running-texts/${id}`, {
-      method: 'DELETE',
-      headers: authHeaders()
-    });
+    await fetch(`/api/admin/running-texts/${id}`, { method: 'DELETE', headers: authHeaders() });
     showToast('Running text dihapus');
     loadRunningTexts();
     updateKpiCards();
   } catch (err) {
     showToast('Gagal menghapus', true);
   }
-};
+}
 
-// Slides Management
+/* ───────── Slides ───────── */
+const SLIDE_TYPE_LABEL = { announcement: 'Informasi', hadith: 'Hadits', image: 'Poster', jumat: "Jum'at" };
+
 async function loadSlides() {
   try {
     const res = await fetch('/api/admin/slides', { headers: authHeaders() });
     const rawSlides = await res.json();
-    // Exclude any legacy kas slides
     const slides = rawSlides.filter(s => s.type !== 'kas');
     const tbody = document.getElementById('table-slides');
-    tbody.innerHTML = '';
 
     if (slides.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#8898aa; padding: 24px;">Belum ada slide agenda yayasan.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="cell-empty">Belum ada agenda. Slide yang ditambahkan akan tampil di tengah layar TV.</td></tr>';
       return;
     }
 
-    slides.forEach(item => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="font-weight:700; color:#525f7f;">#${item.sort_order}</td>
+    tbody.innerHTML = slides.map(item => `
+      <tr>
+        <td class="col-num cell-mono">${Number(item.sort_order) || 0}</td>
         <td>
-          <div style="font-weight:700; color:#32325d;">${item.title}</div>
-          ${item.subtitle ? `<div style="font-size: 11.5px; color: #8898aa; margin-top:2px;">${item.subtitle}</div>` : ''}
+          <div class="cell-strong">${escapeHtml(item.title)}</div>
+          ${item.subtitle ? `<div class="cell-sub">${escapeHtml(item.subtitle)}</div>` : ''}
         </td>
-        <td><span style="font-size: 11px; text-transform:uppercase; font-weight:700; color: #5e72e4;">${item.type}</span></td>
-        <td style="color:#525f7f; font-weight:600;">${item.duration}s</td>
-        <td>
-          <button class="btn-argon btn-danger-argon btn-sm-argon" onclick="deleteSlide(${item.id})">
-            <iconify-icon icon="lucide:trash-2"></iconify-icon>
-          </button>
+        <td><span class="type-tag">${escapeHtml(SLIDE_TYPE_LABEL[item.type] || item.type)}</span></td>
+        <td class="col-num cell-mono">${Number(item.duration) || 0} dtk</td>
+        <td class="col-actions">
+          <div class="cell-actions">
+            <button type="button" class="btn btn-danger btn-sm btn-icon" data-action="delete-slide" data-id="${Number(item.id)}" aria-label="Hapus slide ${escapeHtml(item.title)}">
+              <iconify-icon icon="lucide:trash-2" aria-hidden="true"></iconify-icon>
+            </button>
+          </div>
         </td>
-      `;
-      tbody.appendChild(tr);
-    });
+      </tr>
+    `).join('');
   } catch (err) {
     console.error('Error load slides:', err);
   }
 }
 
-document.getElementById('form-add-slide').addEventListener('submit', async (e) => {
+// Poster file is required only for the image slide type
+const slideType = document.getElementById('slide_type');
+const slideFile = document.getElementById('slide_file');
+function syncSlideFileRequirement() {
+  slideFile.required = slideType.value === 'image';
+  if (!slideFile.required) setFieldError(slideFile, null);
+}
+slideType.addEventListener('change', syncSlideFileRequirement);
+syncSlideFileRequirement();
+
+document.getElementById('form-add-slide').addEventListener('submit', (e) => {
   e.preventDefault();
-  const f = e.target;
-  const title = f.slide_title.value.trim();
-  const subtitle = f.slide_subtitle.value.trim();
-  const type = f.slide_type.value;
-  const content = f.slide_content.value.trim();
-  const duration = parseInt(f.slide_duration.value, 10) || 10;
-  const sort_order = parseInt(f.slide_sort.value, 10) || 0;
-  let image_url = '';
+  const f = e.currentTarget;
+  if (!validateForm(f)) return;
 
-  const fileInput = document.getElementById('slide_file');
-  if (type === 'image' && fileInput.files.length > 0) {
-    const uploadData = new FormData();
-    uploadData.append('file', fileInput.files[0]);
-    try {
-      const uploadRes = await fetch('/api/admin/upload', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + token },
-        body: uploadData
-      });
-      const uploadJson = await uploadRes.json();
-      if (!uploadRes.ok) throw new Error(uploadJson.error || 'Upload gagal');
-      image_url = uploadJson.url;
-    } catch (err) {
-      showToast('Gagal upload gambar: ' + err.message, true);
-      return;
+  const payload = {
+    title: f.slide_title.value.trim(),
+    subtitle: f.slide_subtitle.value.trim(),
+    type: f.slide_type.value,
+    content: f.slide_content.value.trim(),
+    image_url: '',
+    duration: parseInt(f.slide_duration.value, 10) || 10,
+    sort_order: parseInt(f.slide_sort.value, 10) || 0,
+    is_active: 1
+  };
+
+  withBusy(f, async () => {
+    if (payload.type === 'image' && slideFile.files.length > 0) {
+      try {
+        payload.image_url = await uploadFile(slideFile.files[0]);
+      } catch (err) {
+        showToast('Gagal upload gambar: ' + err.message, true);
+        return;
+      }
     }
-  }
 
-  try {
-    const res = await fetch('/api/admin/slides', {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({ title, subtitle, type, content, image_url, duration, sort_order, is_active: 1 })
-    });
-    if (res.ok) {
+    try {
+      const res = await fetch('/api/admin/slides', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error();
       f.reset();
-      showToast('Agenda berhasil ditambahkan');
+      syncSlideFileRequirement();
+      showToast('Agenda ditambahkan ke rotasi TV');
       loadSlides();
       updateKpiCards();
+    } catch (err) {
+      showToast('Gagal menambahkan slide', true);
     }
-  } catch (err) {
-    showToast('Gagal menambahkan slide', true);
-  }
+  });
 });
 
-window.deleteSlide = async (id) => {
-  if (!confirm('Hapus slide ini?')) return;
+async function deleteSlide(id) {
+  if (!confirm('Hapus slide ini dari rotasi TV?')) return;
   try {
-    await fetch(`/api/admin/slides/${id}`, {
-      method: 'DELETE',
-      headers: authHeaders()
-    });
+    await fetch(`/api/admin/slides/${id}`, { method: 'DELETE', headers: authHeaders() });
     showToast('Slide dihapus');
     loadSlides();
     updateKpiCards();
   } catch (err) {
     showToast('Gagal menghapus slide', true);
   }
-};
+}
 
-// Connected TV Devices Monitoring & Actions
+/* ───────── TV monitoring ───────── */
 async function loadTvClients() {
   try {
     const res = await fetch('/api/admin/tv-clients', { headers: authHeaders() });
     const clients = await res.json();
     const tbody = document.getElementById('table-tv-clients');
-    const badgeCount = document.getElementById('topbar-tv-count');
-    const kpiTvStatus = document.getElementById('kpi-tv-status');
-    tbody.innerHTML = '';
 
     const onlineCount = clients.filter(c => c.status === 'online').length;
-    badgeCount.innerText = `${onlineCount} TV Online`;
-    if (kpiTvStatus) {
-      kpiTvStatus.innerText = `${onlineCount} TV`;
-    }
+    document.getElementById('topbar-tv-count').textContent = `${onlineCount} TV online`;
+    document.getElementById('topbar-tv-status').dataset.state = onlineCount > 0 ? 'online' : 'offline';
+    document.getElementById('kpi-tv-status').textContent = `${onlineCount} dari ${clients.length} online`;
 
     if (clients.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#8898aa; padding: 24px;">Belum ada Google TV yang tersambung. Buka URL /tv di browser TV Anda.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="cell-empty">Belum ada TV tersambung. Buka alamat /tv di browser Google TV.</td></tr>';
       return;
     }
 
-    clients.forEach(c => {
+    tbody.innerHTML = clients.map(c => {
       const lastSeenSec = Math.floor((Date.now() - c.last_seen) / 1000);
       const isOnline = c.status === 'online';
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>
-          <div style="font-weight:700; color:#32325d;">${c.name}</div>
-          <div style="font-size:11px; color:#8898aa;">ID: ${c.id}</div>
-        </td>
-        <td style="color:#525f7f; font-family:monospace;">${c.ip || '-'}</td>
-        <td style="color:#525f7f; font-family:monospace;">${c.screen_res || '1920x1080'}</td>
-        <td>
-          <span class="badge-dot ${isOnline ? 'active' : 'inactive'}">
-            <i></i> ${isOnline ? 'Online' : `Offline (${lastSeenSec}s lalu)`}
-          </span>
-        </td>
-        <td style="display:flex; gap:6px;">
-          <button class="btn-argon btn-secondary-argon btn-sm-argon" onclick="triggerTvAction('test-beep', '${c.id}')">
-            <iconify-icon icon="lucide:volume-2"></iconify-icon> Bip
-          </button>
-          <button class="btn-argon btn-secondary-argon btn-sm-argon" onclick="triggerTvAction('reload', '${c.id}')">
-            <iconify-icon icon="lucide:refresh-cw"></iconify-icon> Reload
-          </button>
-        </td>
+      const id = escapeHtml(c.id);
+      return `
+        <tr>
+          <td>
+            <div class="cell-strong">${escapeHtml(c.name)}</div>
+            <div class="cell-sub">ID ${id}</div>
+          </td>
+          <td class="cell-mono">${escapeHtml(c.ip || '-')}</td>
+          <td class="cell-mono">${escapeHtml(c.screen_res || '-')}</td>
+          <td><span class="badge-status ${isOnline ? 'is-on' : ''}">${isOnline ? 'Online' : `Offline · ${lastSeenSec} dtk lalu`}</span></td>
+          <td class="col-actions">
+            <div class="cell-actions">
+              <button type="button" class="btn btn-secondary btn-sm" data-tv-action="test-beep" data-client="${id}">
+                <iconify-icon icon="lucide:volume-2" aria-hidden="true"></iconify-icon> Bip
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" data-tv-action="reload" data-client="${id}">
+                <iconify-icon icon="lucide:refresh-cw" aria-hidden="true"></iconify-icon> Muat ulang
+              </button>
+            </div>
+          </td>
+        </tr>
       `;
-      tbody.appendChild(tr);
-    });
+    }).join('');
   } catch (err) {
     console.error('Error load tv clients:', err);
   }
 }
 
-window.triggerTvAction = async (action, targetClientId = null) => {
+async function triggerTvAction(action, targetClientId = null) {
+  const label = action === 'reload' ? 'Muat ulang' : 'Tes bip';
   try {
     const res = await fetch('/api/admin/action', {
       method: 'POST',
@@ -512,18 +650,34 @@ window.triggerTvAction = async (action, targetClientId = null) => {
     });
     const data = await res.json();
     if (res.ok) {
-      showToast(`Perintah ${action} dikirim ke TV`);
+      showToast(`${label} dikirim ke ${targetClientId ? 'TV ' + targetClientId : 'semua TV'}`);
     } else {
       showToast(data.error || 'Gagal mengirim perintah', true);
     }
   } catch (err) {
     showToast('Gagal menghubungi TV', true);
   }
-};
+}
+
+/* ───────── Delegated table / action clicks ───────── */
+document.addEventListener('click', (e) => {
+  const tvBtn = e.target.closest('[data-tv-action]');
+  if (tvBtn) {
+    triggerTvAction(tvBtn.dataset.tvAction, tvBtn.dataset.client || null);
+    return;
+  }
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const id = Number(btn.dataset.id);
+  if (btn.dataset.action === 'toggle-text') toggleRunningText(id);
+  if (btn.dataset.action === 'delete-text') deleteRunningText(id);
+  if (btn.dataset.action === 'delete-slide') deleteSlide(id);
+});
 
 setInterval(loadTvClients, 10000);
 
 window.addEventListener('DOMContentLoaded', () => {
+  // Parallel, independent loads
   loadCities();
   loadSettings();
   loadRunningTexts();

@@ -1,0 +1,73 @@
+/*
+ * AdhanCast design tokens — shared by TV, admin, login and portal.
+ * Brand hue: deep teal #0F766E (domain table, "anything not listed").
+ * Urgent accent: clay #B45309 (azan alerts, countdown, reminders).
+ * Display face: Bricolage Grotesque 500/700. Body: Inter 400/500.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Inter:wght@400;500&display=swap');
+
+:root {
+  /* Brand */
+  --brand: #0F766E;          /* white on brand = 5.5:1 */
+  --brand-strong: #115E59;   /* hover/pressed */
+  --brand-soft: #F0FDFA;     /* brand text on this = 5.3:1 */
+  --brand-on-dark: #5EEAD4;  /* on #0F172A = 11:1 */
+  --urgent: #B45309;         /* white on urgent = 5.0:1 */
+  --urgent-strong: #92400E;
+  --danger: #B91C1C;         /* white on danger = 6.5:1 */
+  --danger-soft: #FEF2F2;
+  --success: #15803D;        /* on white = 5.0:1 */
+
+  /* Surfaces & text */
+  --page: #F8FAFC;
+  --card: #FFFFFF;
+  --subtle: #F1F5F9;
+  --border: #E2E8F0;
+  --border-strong: #CBD5E1;  /* decorative only */
+  --control-border: #848FA3; /* input/button edge, 3.26:1 on white */
+  --text: #0F172A;           /* on page = 17.1:1 */
+  --muted: #475569;          /* on page = 7.2:1 */
+  --ink: #0F172A;            /* dark surface for TV panels */
+
+  /* Type */
+  --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+
+  /* Radius scale */
+  --r-badge: 4px;   /* rectangular badges */
+  --r-control: 6px; /* inputs, buttons, tooltips */
+  --r-card: 8px;    /* cards, tables, sections */
+  --r-modal: 12px;  /* modals, drawers */
+
+  /* Motion (SKILL motion table) */
+  --t-hover: 150ms;
+  --t-enter: 200ms;
+  --t-exit: 150ms;
+
+  --focus-ring: 0 0 0 3px rgba(15, 118, 110, 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

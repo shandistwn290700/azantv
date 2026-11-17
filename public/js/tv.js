@@ -1,12 +1,30 @@
 /**
- * Google TV Display Engine (Gambar 2 Layout Reference)
- * Jam Sholat Digital TV with Custom Background & Clutter-Free Display
+ * Google TV Display Engine
+ * Jam Sholat Digital TV with custom background and clutter-free display
  */
 
 let TV_CLIENT_ID = localStorage.getItem('azan_tv_client_id');
 if (!TV_CLIENT_ID) {
   TV_CLIENT_ID = 'gtv_' + Math.random().toString(36).substring(2, 10);
   localStorage.setItem('azan_tv_client_id', TV_CLIENT_ID);
+}
+
+// Escape any admin-supplied text before it reaches innerHTML
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Only allow same-origin upload paths or http(s) URLs as image sources
+function safeImageUrl(url) {
+  if (!url) return '';
+  const u = String(url).trim();
+  if (u.startsWith('/uploads/') || /^https?:\/\//i.test(u)) return u.replace(/"/g, '%22');
+  return '';
 }
 
 // Global State
@@ -114,28 +132,28 @@ function applyDataToUI() {
   if (!appData) return;
   const s = appData.settings;
 
-  // 1. Custom Background Image & Overlay (Gambar 2 Reference)
+  // 1. Custom background image & overlay
   const bgLayer = document.getElementById('tv-bg-layer');
   if (bgLayer) {
-    const bgUrl = s.tv_bg_image || '/uploads/default_bg.jpg';
+    const bgUrl = safeImageUrl(s.tv_bg_image) || '/uploads/default_bg.jpg';
     bgLayer.style.backgroundImage = `url("${bgUrl}")`;
   }
   const bgOverlay = document.getElementById('tv-bg-overlay');
   if (bgOverlay) {
     const overlayVal = s.tv_bg_overlay !== undefined ? s.tv_bg_overlay : '0.22';
-    bgOverlay.style.backgroundColor = `rgba(0, 0, 0, ${overlayVal})`;
+    bgOverlay.style.backgroundColor = `rgba(0, 0, 0, ${parseFloat(overlayVal) || 0})`;
   }
 
-  // 2. Mosque / Yayasan Name & Address
+  // 2. Mosque / Yayasan name & address
   document.getElementById('mosque-name').innerText = s.mosque_name || 'MASJID LUQMANUL HAKIM';
   document.getElementById('mosque-address').innerText = s.mosque_address || 'Jl. Gandasoli Kidul No. 42 Ds. Gandasari Kec. Katapang Kab. Bandung, 40921';
 
-  // 3. Hijri Date
+  // 3. Hijri date
   if (appData.hijri) {
     document.getElementById('hijri-date').innerText = appData.hijri.formatted;
   }
 
-  // 4. Setup client calculation engine
+  // 4. Client calculation engine
   clientEngine = new ClientPrayerEngine({
     lat: parseFloat(s.latitude),
     lng: parseFloat(s.longitude),
@@ -158,10 +176,10 @@ function applyDataToUI() {
   renderPrayerBar();
   renderRunningText();
   renderSlides();
-  tick(); // immediate calculation
+  tick();
 }
 
-// 7 Prayer Cards Floating Deck (Gambar 2 Reference)
+// Seven-card prayer deck. Imsak and Syuruq are markers, rendered quieter.
 function renderPrayerBar() {
   if (!appData || !appData.prayerTimes) return;
   const pt = appData.prayerTimes;
@@ -175,50 +193,72 @@ function renderPrayerBar() {
     { key: 'maghrib', name: 'Maghrib' },
     { key: 'isya', name: 'Isya' }
   ];
+  const markers = ['imsak', 'terbit'];
 
   const grid = document.getElementById('prayer-cards-deck');
   grid.innerHTML = '';
 
   prayers.forEach(p => {
-    const slot = document.createElement('div');
-    slot.className = `prayer-slot-box color-${p.key}`;
+    const slot = document.createElement('li');
+    slot.className = 'prayer-slot-box' + (markers.includes(p.key) ? ' is-marker' : '');
     slot.id = `slot-${p.key}`;
     slot.innerHTML = `
-      <div class="slot-title">${p.name}</div>
-      <div class="slot-hour">${pt[p.key] || '--:--'}</div>
-      <div class="slot-countdown" id="cd-${p.key}"></div>
-      <div class="slot-stripe"></div>
+      <span class="slot-next-label">Berikutnya</span>
+      <span class="slot-title">${p.name}</span>
+      <span class="slot-hour">${escapeHtml(pt[p.key] || '--:--')}</span>
+      <span class="slot-countdown" id="cd-${p.key}"></span>
     `;
     grid.appendChild(slot);
   });
 }
 
-// Dual-Tier Ticker: Tier 1 (Dark Bar Agenda) & Tier 2 (Red Bar Hadits)
+// Two-tier ticker: tier 1 scrolls admin announcements, tier 2 rotates static reminders
+const DEFAULT_INFO = 'Selamat Datang di Masjid Luqmanul Hakim - Yayasan Pendidikan Islam (TKIT - SDIT - SMPIT)';
+const REMINDERS = [
+  '"Kerjakanlah sholat tepat pada waktunya" (HR. Muslim)',
+  'Luruskan dan rapatkan shaf sholat berjamaah untuk kesempurnaan sholat.'
+];
+let reminderIndex = 0;
+let reminderTimer = null;
+
 function renderRunningText() {
   if (!appData) return;
-  const texts = appData.runningTexts || [];
+  const texts = (appData.runningTexts || []).map(t => t.text).filter(Boolean);
+  const infoTicker = document.getElementById('ticker-dark-content');
 
-  const darkTicker = document.getElementById('ticker-dark-content');
-  const redTicker = document.getElementById('ticker-red-content');
+  const items = texts.length ? texts : [DEFAULT_INFO];
+  infoTicker.innerHTML = items.map(escapeHtml).join('<span class="ticker-sep" aria-hidden="true"></span>');
+  // Constant reading speed regardless of text length (about 9 characters per second)
+  const chars = items.join(' ').length;
+  infoTicker.style.setProperty('--ticker-duration', Math.max(20, Math.round(chars / 9 + 12)) + 's');
 
-  if (texts.length === 0) {
-    darkTicker.innerHTML = "Selamat Datang di Masjid Luqmanul Hakim - Yayasan Pendidikan Islam (TKIT - SDIT - SMPIT)";
-    redTicker.innerHTML = '"Kerjakanlah sholat tepat pada waktunya" (HR. Muslim)';
-    return;
-  }
-
-  // Agenda & School information
-  const textStrings = texts.map(t => t.text);
-  darkTicker.innerHTML = textStrings.join('<span class="ticker-sep">•</span>');
-  redTicker.innerHTML = '"Kerjakanlah sholat tepat pada waktunya" (HR. Muslim) <span class="ticker-sep">•</span> "Luruskan dan rapatkan shaf sholat berjamaah untuk kesempurnaan sholat."';
+  showReminder();
+  if (reminderTimer) clearInterval(reminderTimer);
+  reminderTimer = setInterval(rotateReminder, 15000);
 }
 
-// Center Stage: Alternates between Announcement Slide and Clean Background View
+function showReminder() {
+  document.getElementById('ticker-red-content').textContent = REMINDERS[reminderIndex % REMINDERS.length];
+}
+
+function rotateReminder() {
+  const el = document.getElementById('ticker-red-content');
+  el.classList.add('is-swapping');
+  setTimeout(() => {
+    reminderIndex++;
+    showReminder();
+    el.classList.remove('is-swapping');
+  }, 160);
+}
+
+// Center stage: alternates between an announcement slide and the clean background
 function renderSlides() {
   if (!appData) return;
-  // STRICTLY FILTER OUT KAS / FINANCIAL REPORTS FOR EDUCATION FOUNDATION!
+  // Financial (kas) slides are never shown on this display
   const slides = (appData.slides || []).filter(s => s.type !== 'kas');
   const stage = document.getElementById('tv-center-stage');
+
+  if (slideInterval) clearTimeout(slideInterval);
 
   if (slides.length === 0) {
     stage.innerHTML = '';
@@ -226,56 +266,47 @@ function renderSlides() {
   }
 
   const s = appData.settings;
+  const kickers = { announcement: 'Agenda Yayasan', hadith: 'Hadits & Pengingat', image: 'Poster Kegiatan', jumat: "Petugas Jum'at" };
 
   const cycleStage = () => {
-    if (slides.length === 0) {
-      stage.innerHTML = '';
-      return;
-    }
-
-    // Step pattern: Even = Show Clear Background (15s), Odd = Show Slide (10s)
+    // Even step = clean background (16s), odd step = slide
     const isShowingSlide = (currentSlideStep % 2 === 1);
     const slideIndex = Math.floor(currentSlideStep / 2) % slides.length;
 
     if (!isShowingSlide) {
-      // Clean clear background showcase
       stage.innerHTML = '';
       slideInterval = setTimeout(() => {
         currentSlideStep++;
         cycleStage();
-      }, 16000); // 16 seconds clean scenic view
+      }, 16000);
       return;
     }
 
     const slide = slides[slideIndex];
+    const kicker = kickers[slide.type] || 'Informasi';
 
     if (slide.type === 'jumat') {
       stage.innerHTML = `
         <div class="slide-backdrop-box">
-          <div class="slide-title">${slide.title || "Sholat Jum'at"}</div>
-          ${s.jumat_tanggal ? `<div class="slide-subtitle">${s.jumat_tanggal}</div>` : ''}
-          <div class="jumat-roster-grid">
-            <div class="jumat-box">
-              <span>Khatib</span>
-              <h4>${s.jumat_khatib || '-'}</h4>
-            </div>
-            <div class="jumat-box">
-              <span>Imam</span>
-              <h4>${s.jumat_imam || '-'}</h4>
-            </div>
-            <div class="jumat-box">
-              <span>Muadzin</span>
-              <h4>${s.jumat_muadzin || '-'}</h4>
-            </div>
-          </div>
+          <div class="slide-kicker">${kicker}</div>
+          <div class="slide-title">${escapeHtml(slide.title || "Sholat Jum'at")}</div>
+          ${s.jumat_tanggal ? `<div class="slide-subtitle">${escapeHtml(s.jumat_tanggal)}</div>` : ''}
+          <dl class="jumat-roster">
+            <div><dt>Khatib</dt><dd>${escapeHtml(s.jumat_khatib || '-')}</dd></div>
+            <div><dt>Imam</dt><dd>${escapeHtml(s.jumat_imam || '-')}</dd></div>
+            <div><dt>Muadzin</dt><dd>${escapeHtml(s.jumat_muadzin || '-')}</dd></div>
+          </dl>
         </div>
       `;
     } else {
+      const img = slide.type === 'image' ? safeImageUrl(slide.image_url) : '';
       stage.innerHTML = `
-        <div class="slide-backdrop-box">
-          <div class="slide-title">${slide.title}</div>
-          ${slide.subtitle ? `<div class="slide-subtitle">${slide.subtitle}</div>` : ''}
-          <div class="slide-text">${slide.content || ''}</div>
+        <div class="slide-backdrop-box${img ? ' has-image' : ''}">
+          ${img ? `<img class="slide-poster" src="${img}" alt="${escapeHtml(slide.title || 'Poster kegiatan')}">` : ''}
+          <div class="slide-kicker">${kicker}</div>
+          <div class="slide-title">${escapeHtml(slide.title)}</div>
+          ${slide.subtitle ? `<div class="slide-subtitle">${escapeHtml(slide.subtitle)}</div>` : ''}
+          ${slide.content ? `<div class="slide-text">${escapeHtml(slide.content)}</div>` : ''}
         </div>
       `;
     }
@@ -287,25 +318,22 @@ function renderSlides() {
     }, duration * 1000);
   };
 
-  if (slideInterval) clearTimeout(slideInterval);
   cycleStage();
 }
 
 function tick() {
   const now = new Date(Date.now() + serverSkew);
   const pad = (n) => String(n).padStart(2, '0');
-  const hh = pad(now.getHours());
-  const mm = pad(now.getMinutes());
 
-  // Gambar 2 format: clean bold HH:MM
   const clockEl = document.getElementById('clock-main');
-  if (clockEl) clockEl.innerText = `${hh}:${mm}`;
+  if (clockEl) clockEl.innerText = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const secEl = document.getElementById('clock-sec');
+  if (secEl) secEl.innerText = pad(now.getSeconds());
 
   const days = ['Ahad', 'Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu'];
   const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-  const dateStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
   const gregEl = document.getElementById('gregorian-date');
-  if (gregEl) gregEl.innerText = dateStr;
+  if (gregEl) gregEl.innerText = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
 
   if (!appData || !appData.prayerTimes) return;
   const currentSecondsOfDay = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
@@ -342,32 +370,23 @@ function handlePrayerScheduleAndCountdowns(now, currentSec) {
   // Azan trigger
   if (currentState === 'NORMAL') {
     for (const p of mainPrayers) {
-      const pSec = timeToSeconds(pt[p.key]);
-      if (currentSec === pSec) {
+      if (currentSec === timeToSeconds(pt[p.key])) {
         startAzan(p);
         return;
       }
     }
   }
 
-  if (currentState === 'AZAN') {
-    handleAzanState(now);
-    return;
-  } else if (currentState === 'IQOMAH') {
-    handleIqomahState(now);
-    return;
-  } else if (currentState === 'SALAT') {
-    handleSalatState(now);
-    return;
-  }
+  if (currentState === 'AZAN') { handleAzanState(now); return; }
+  if (currentState === 'IQOMAH') { handleIqomahState(now); return; }
+  if (currentState === 'SALAT') { handleSalatState(now); return; }
 
   // Find next prayer point
   let nextPoint = null;
   let minDiff = Infinity;
 
   for (const point of allPoints) {
-    const targetSec = timeToSeconds(pt[point.key]);
-    const diff = targetSec - currentSec;
+    const diff = timeToSeconds(pt[point.key]) - currentSec;
     if (diff > 0 && diff < minDiff) {
       minDiff = diff;
       nextPoint = point;
@@ -381,34 +400,20 @@ function handlePrayerScheduleAndCountdowns(now, currentSec) {
   }
 
   const pad = (n) => String(n).padStart(2, '0');
-  const cdH = Math.floor(minDiff / 3600);
-  const cdM = Math.floor((minDiff % 3600) / 60);
-  const cdS = minDiff % 60;
-  const cdFormatted = `${pad(cdH)}:${pad(cdM)}:${pad(cdS)}`;
+  const cdFormatted = `${pad(Math.floor(minDiff / 3600))}:${pad(Math.floor((minDiff % 3600) / 60))}:${pad(minDiff % 60)}`;
 
-  // Floating red badge on top right (Gambar 2 Reference)
+  const badgeLabel = document.getElementById('badge-countdown-label');
   const badgeText = document.getElementById('badge-countdown-text');
-  if (badgeText) {
-    badgeText.innerText = `${nextPoint.name} -${cdFormatted}`;
-  }
+  if (badgeLabel) badgeLabel.innerText = `Menuju ${nextPoint.name}`;
+  if (badgeText) badgeText.innerText = cdFormatted;
 
-  // Update Prayer slots in the deck
   allPoints.forEach(p => {
     const slot = document.getElementById(`slot-${p.key}`);
     const cdSlot = document.getElementById(`cd-${p.key}`);
-    if (slot) {
-      if (p.key === nextPoint.key) {
-        slot.classList.add('is-active-slot');
-        if (cdSlot) {
-          cdSlot.innerText = `-${cdFormatted}`;
-        }
-      } else {
-        slot.classList.remove('is-active-slot');
-        if (cdSlot) {
-          cdSlot.innerText = '';
-        }
-      }
-    }
+    if (!slot) return;
+    const isNext = p.key === nextPoint.key;
+    slot.classList.toggle('is-active-slot', isNext);
+    if (cdSlot) cdSlot.innerText = isNext ? `-${cdFormatted}` : '';
   });
 }
 
@@ -418,7 +423,7 @@ function startAzan(prayer) {
   const azanDurationMin = parseInt(appData.settings.azan_duration || 3, 10);
   stateEndTime = Date.now() + azanDurationMin * 60 * 1000;
 
-  document.getElementById('azan-prayer-hero').innerText = `ADZAN ${prayer.name.toUpperCase()}`;
+  document.getElementById('azan-prayer-hero').innerText = `Adzan ${prayer.name}`;
   document.getElementById('overlay-azan').classList.add('active');
 
   if (appData.settings.beep_enabled !== '0') {
@@ -427,8 +432,7 @@ function startAzan(prayer) {
 }
 
 function handleAzanState(now) {
-  const remainingMs = stateEndTime - Date.now();
-  if (remainingMs <= 0) {
+  if (stateEndTime - Date.now() <= 0) {
     document.getElementById('overlay-azan').classList.remove('active');
     startIqomah(activePrayer);
   }
@@ -440,7 +444,7 @@ function startIqomah(prayer) {
   const iqomahDurationMin = parseInt(appData.settings[iqomahKey] || 10, 10);
   stateEndTime = Date.now() + iqomahDurationMin * 60 * 1000;
 
-  document.getElementById('iqomah-prayer-lead').innerText = `IQOMAH ${prayer.name.toUpperCase()}`;
+  document.getElementById('iqomah-prayer-lead').innerText = `Iqomah ${prayer.name}`;
   document.getElementById('overlay-iqomah').classList.add('active');
 
   if (appData.settings.beep_enabled !== '0') {
@@ -451,15 +455,11 @@ function startIqomah(prayer) {
 function handleIqomahState(now) {
   const remainingSec = Math.max(0, Math.floor((stateEndTime - Date.now()) / 1000));
   const pad = (n) => String(n).padStart(2, '0');
-  const mm = pad(Math.floor(remainingSec / 60));
-  const ss = pad(remainingSec % 60);
 
-  document.getElementById('iqomah-timer').innerText = `${mm}:${ss}`;
+  document.getElementById('iqomah-timer').innerText = `${pad(Math.floor(remainingSec / 60))}:${pad(remainingSec % 60)}`;
 
-  if (remainingSec <= 10 && remainingSec > 0) {
-    if (appData.settings.beep_enabled !== '0') {
-      audioSynth.playBeep(1, 880);
-    }
+  if (remainingSec <= 10 && remainingSec > 0 && appData.settings.beep_enabled !== '0') {
+    audioSynth.playBeep(1, 880);
   }
 
   if (remainingSec <= 0) {
@@ -479,8 +479,7 @@ function startSalat(prayer) {
 }
 
 function handleSalatState(now) {
-  const remainingMs = stateEndTime - Date.now();
-  if (remainingMs <= 0) {
+  if (stateEndTime - Date.now() <= 0) {
     document.getElementById('overlay-salat').classList.remove('active');
     currentState = 'NORMAL';
     activePrayer = null;
@@ -500,40 +499,49 @@ function sendHeartbeat() {
   }).catch(() => {});
 }
 
+// Network chip reflects the real connection state (browser + live event stream)
+function setNetworkState(isOnline) {
+  const chip = document.getElementById('chip-network');
+  const text = document.getElementById('chip-network-text');
+  if (!chip || !text) return;
+  chip.dataset.state = isOnline ? 'online' : 'offline';
+  text.innerText = isOnline ? 'Terhubung' : 'Offline';
+  const icon = chip.querySelector('iconify-icon');
+  if (icon) icon.setAttribute('icon', isOnline ? 'lucide:wifi' : 'lucide:wifi-off');
+}
+window.addEventListener('online', () => setNetworkState(true));
+window.addEventListener('offline', () => setNetworkState(false));
+
 function setupSSE() {
   if (!window.EventSource) return;
   const es = new EventSource('/api/events?clientId=' + TV_CLIENT_ID);
 
+  es.onopen = () => setNetworkState(true);
   es.addEventListener('data-update', () => loadData());
   es.addEventListener('test-beep', () => audioSynth.playAzanChime());
   es.addEventListener('reload', () => window.location.reload());
 
   es.onerror = () => {
+    setNetworkState(false);
     es.close();
     setTimeout(setupSSE, 10000);
   };
 }
 
-window.addEventListener('keydown', (e) => {
-  if (e.key === 'f' || e.key === 'F') {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    } else {
-      document.exitFullscreen().catch(() => {});
-    }
-  }
-  if (e.key === 'r' || e.key === 'R') {
-    loadData();
-  }
-});
-
-window.addEventListener('dblclick', () => {
+function toggleFullscreen() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch(() => {});
   } else {
     document.exitFullscreen().catch(() => {});
   }
+}
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+  if (e.key === 'r' || e.key === 'R') loadData();
 });
+
+window.addEventListener('dblclick', toggleFullscreen);
 
 document.addEventListener('DOMContentLoaded', () => {
   const audioBtn = document.getElementById('btn-audio-toggle');
@@ -544,6 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  setNetworkState(navigator.onLine !== false);
   loadData();
   setupSSE();
   setInterval(tick, 1000);
