@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - AdhanCast</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&display=swap">
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Open Sans', sans-serif; }
+    body {
+      background-color: #172b4d;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .header-bg {
+      background: linear-gradient(87deg, #5e72e4 0, #825ee4 100%);
+      padding: 60px 20px 130px 20px;
+      text-align: center;
+      color: #ffffff;
+      position: relative;
+    }
+    .header-bg h1 {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+    }
+    .separator-skew {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      overflow: hidden;
+      line-height: 0;
+    }
+    .separator-skew svg {
+      width: 100%;
+      height: 60px;
+      fill: #172b4d;
+    }
+    .main-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: -80px;
+      padding: 0 20px 40px 20px;
+      z-index: 10;
+    }
+    .card-login {
+      background: #f4f5f7;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 15px 35px rgba(50, 50, 93, 0.2), 0 5px 15px rgba(0, 0, 0, 0.17);
+      overflow: hidden;
+    }
+    .card-header {
+      background: #ffffff;
+      padding: 22px;
+      text-align: center;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .brand-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(87deg, #5e72e4 0, #825ee4 100%);
+      margin: 0 auto 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(94, 114, 228, 0.4);
+      color: #ffffff;
+      font-size: 22px;
+    }
+    .card-header h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #32325d;
+    }
+    .card-body {
+      padding: 28px 24px;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #525f7f;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+    .input-box {
+      width: 100%;
+      padding: 10px 12px;
+      background: #ffffff;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      font-size: 13.5px;
+      color: #495057;
+      outline: none;
+      box-shadow: 0 1px 3px rgba(50, 50, 93, 0.08);
+      transition: all 0.15s ease;
+    }
+    .input-box:focus {
+      border-color: #5e72e4;
+      box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+    .btn-login {
+      width: 100%;
+      padding: 11px;
+      background: #5e72e4;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+      transition: all 0.15s ease;
+      margin-top: 6px;
+    }
+    .btn-login:hover {
+      background: #4c63e2;
+    }
+    .error-alert {
+      background: #fee2e2;
+      border: 1px solid #f87171;
+      color: #b91c1c;
+      padding: 9px 12px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-bottom: 18px;
+      display: none;
+    }
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .footer-links a {
+      color: #adb5bd;
+      font-size: 12.5px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .footer-links a:hover {
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-bg">
+    <h1>AdhanCast Console</h1>
+    <div class="separator-skew">
+      <svg viewBox="0 0 2560 100" preserveAspectRatio="none">
+        <polygon points="2560 0 2560 100 0 100"></polygon>
+      </svg>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="card-login">
+      <div class="card-header">
+        <div class="brand-circle">
+          <iconify-icon icon="lucide:lock"></iconify-icon>
+        </div>
+        <h2>Otorisasi Pengurus</h2>
+      </div>
+
+      <div class="card-body">
+        <div class="error-alert" id="error-msg"></div>
+
+        <form id="login-form">
+          <div class="form-group">
+            <label for="password">Kata Sandi</label>
+            <input type="password" class="input-box" id="password" placeholder="••••••••" required autofocus>
+          </div>
+          <button type="submit" class="btn-login" id="btn-submit">Masuk</button>
+        </form>
+
+        <div class="footer-links">
+          <a href="/tv">Buka Layar Google TV →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('login-form');
+    const errBox = document.getElementById('error-msg');
+
+    const token = localStorage.getItem('azan_admin_token');
+    if (token) {
+      fetch('/api/admin/check-auth', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      }).then(res => {
+        if (res.ok) window.location.href = '/admin';
+      }).catch(() => {});
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errBox.style.display = 'none';
+      const password = document.getElementById('password').value;
+
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        const data = await res.json();
+        if (res.ok && data.token) {
+          localStorage.setItem('azan_admin_token', data.token);
+          window.location.href = '/admin';
+        } else {
+          errBox.innerText = data.error || 'Kata sandi salah';
+          errBox.style.display = 'block';
+        }
+      } catch (err) {
+        errBox.innerText = 'Gagal tersambung';
+        errBox.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

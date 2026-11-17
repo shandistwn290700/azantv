@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Display Masjid - Jam Sholat Digital TV</title>
+  <link rel="stylesheet" href="/css/tv.css">
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23ff9800%22 stroke-width=%222%22><path d=%22M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z%22/></svg>">
+</head>
+<body>
+  <!-- FULLSCREEN BACKGROUND IMAGE LAYER -->
+  <div class="tv-background-layer" id="tv-bg-layer"></div>
+  <div class="tv-background-overlay" id="tv-bg-overlay"></div>
+
+  <!-- TOP HEADER (Gambar 2 White Frosted Glass Banner) -->
+  <header class="tv-header-bar">
+    <!-- Left: Digital Clock -->
+    <div class="header-clock">
+      <span class="clock-main" id="clock-main">00:00</span>
+    </div>
+
+    <!-- Center: Mosque / Yayasan Name & Address -->
+    <div class="header-mosque">
+      <h1 id="mosque-name">MASJID LUQMANUL HAKIM</h1>
+      <p id="mosque-address">Jl. Gandasoli Kidul No. 42 Ds. Gandasari Kec. Katapang Kab. Bandung, 40921</p>
+    </div>
+
+    <!-- Right: Gregorian & Hijri Calendar -->
+    <div class="header-calendar">
+      <span class="gregorian" id="gregorian-date">...</span>
+      <span class="hijri" id="hijri-date">...</span>
+    </div>
+  </header>
+
+  <!-- TOP FLOATING BAR (Gambar 2 Reference: Status Pills & Red Countdown Pill) -->
+  <div class="tv-sub-bar">
+    <div class="sub-bar-left">
+      <div class="tv-pill-badge" title="Status Jaringan">
+        <iconify-icon icon="lucide:wifi"></iconify-icon>
+      </div>
+      <div class="tv-pill-badge" id="btn-audio-toggle" title="Status Audio">
+        <iconify-icon icon="lucide:volume-2"></iconify-icon>
+      </div>
+      <div class="tv-pill-badge pill-mode">
+        <iconify-icon icon="lucide:shield-check"></iconify-icon>
+        <span>Mode Standby</span>
+      </div>
+    </div>
+
+    <div class="sub-bar-right">
+      <div class="tv-floating-badge" id="tv-floating-badge">
+        <span id="badge-countdown-text">Menuju Sholat...</span>
+      </div>
+      <a href="/admin" class="tv-settings-link" title="Pengaturan Display">
+        <iconify-icon icon="lucide:settings"></iconify-icon>
+      </a>
+    </div>
+  </div>
+
+  <!-- CENTER STAGE (Yayasan Agenda / Announcement Slides or Clean Photo View) -->
+  <main class="tv-center-stage" id="tv-center-stage">
+    <!-- Dynamic slide showcase or clear background view -->
+  </main>
+
+  <!-- LOWER FLOATING PRAYER DECK (Gambar 2 Exact 7 Cards) -->
+  <section class="tv-prayer-ribbon">
+    <div class="prayer-cards-deck" id="prayer-cards-deck">
+      <!-- 7 prayer cards generated dynamically -->
+    </div>
+  </section>
+
+  <!-- BOTTOM DUAL-TIER RUNNING TICKER (Gambar 2 Reference) -->
+  <footer class="tv-dual-ticker">
+    <!-- Tier 1: Dark Translucent Bar (Agenda Yayasan & Pengumuman Sekolah) -->
+    <div class="ticker-tier-dark">
+      <div class="ticker-scroll" id="ticker-dark-content">
+        Selamat Datang di Masjid Luqmanul Hakim - Yayasan Pendidikan Islam (TKIT - SDIT - SMPIT)
+      </div>
+    </div>
+    <!-- Tier 2: Red Accent Bar (Hadits & Pengingat Sholat) -->
+    <div class="ticker-tier-red">
+      <div class="ticker-scroll" id="ticker-red-content">
+        "Kerjakanlah sholat tepat pada waktunya" (HR. Muslim)
+      </div>
+    </div>
+  </footer>
+
+  <!-- FULLSCREEN OVERLAYS (AZAN, IQOMAH, SALAT) -->
+  <div class="tv-full-overlay overlay-azan" id="overlay-azan">
+    <div class="azan-lead">WAKTU SHOLAT TELAH TIBA</div>
+    <div class="azan-hero" id="azan-prayer-hero">ADZAN</div>
+  </div>
+
+  <div class="tv-full-overlay overlay-iqomah" id="overlay-iqomah">
+    <div class="iqomah-lead" id="iqomah-prayer-lead">IQOMAH</div>
+    <div class="iqomah-timer" id="iqomah-timer">00:00</div>
+  </div>
+
+  <div class="tv-full-overlay overlay-salat" id="overlay-salat">
+    <div class="salat-text">LURUSKAN & RAPATKAN SHAF</div>
+  </div>
+
+  <script src="/js/prayer-engine.js"></script>
+  <script src="/js/tv.js"></script>
+</body>
+</html>

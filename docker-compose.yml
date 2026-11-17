@@ -1,0 +1,21 @@
+services:
+  azan-tv:
+    build: .
+    container_name: azan-display-tv
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - ADMIN_PASSWORD=admin123
+      - DATA_DIR=/app/data
+    volumes:
+      - azan_tv_data:/app/data
+      - azan_tv_uploads:/app/public/uploads
+
+volumes:
+  azan_tv_data:
+    name: azan_tv_data
+  azan_tv_uploads:
+    name: azan_tv_uploads
