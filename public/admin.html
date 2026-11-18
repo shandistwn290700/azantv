@@ -58,15 +58,23 @@
       <p class="nav-heading">Tampilan &amp; Sistem</p>
       <button type="button" class="nav-item" data-tab="tab-bg-theme">
         <iconify-icon icon="lucide:image" aria-hidden="true"></iconify-icon>
-        <span>Background &amp; Akun</span>
+        <span>Background &amp; Sandi</span>
       </button>
       <button type="button" class="nav-item" data-tab="tab-monitoring">
         <iconify-icon icon="lucide:tv" aria-hidden="true"></iconify-icon>
         <span>Monitoring TV</span>
       </button>
+      <button type="button" class="nav-item" data-tab="tab-accounts" data-admin-only hidden>
+        <iconify-icon icon="lucide:users" aria-hidden="true"></iconify-icon>
+        <span>Akun Pengurus</span>
+      </button>
     </nav>
 
     <footer class="sidebar-footer">
+      <p class="signed-in" id="signed-in" hidden>
+        <span class="signed-in-label">Masuk sebagai</span>
+        <span class="signed-in-name" id="signed-in-name"></span>
+      </p>
       <a href="/tv" target="_blank" rel="noopener" class="btn btn-secondary btn-block">
         <iconify-icon icon="lucide:external-link" aria-hidden="true"></iconify-icon>
         <span>Buka layar TV</span>
@@ -510,14 +518,24 @@
         <form id="form-password" novalidate>
           <div class="card card-narrow">
             <div class="card-header">
-              <h2>Kata sandi panel</h2>
-              <p>Berlaku untuk login berikutnya.</p>
+              <h2>Kata sandi Anda</h2>
+              <p>Mengganti kata sandi akan mengeluarkan akun Anda dari perangkat lain.</p>
             </div>
             <div class="card-body">
               <div class="field">
-                <label for="new_password">Kata sandi baru</label>
-                <input type="password" class="input" id="new_password" name="new_password" minlength="4" required autocomplete="new-password" aria-describedby="pw-hint">
-                <p class="hint" id="pw-hint">Minimal 4 karakter.</p>
+                <label for="current_password">Kata sandi saat ini</label>
+                <input type="password" class="input" id="current_password" name="current_password" required autocomplete="current-password">
+              </div>
+              <div class="form-grid form-grid-2">
+                <div class="field">
+                  <label for="new_password">Kata sandi baru</label>
+                  <input type="password" class="input" id="new_password" name="new_password" minlength="8" required autocomplete="new-password" aria-describedby="pw-hint">
+                  <p class="hint" id="pw-hint">Minimal 8 karakter.</p>
+                </div>
+                <div class="field">
+                  <label for="confirm_password">Ulangi kata sandi baru</label>
+                  <input type="password" class="input" id="confirm_password" minlength="8" required autocomplete="new-password">
+                </div>
               </div>
             </div>
             <div class="card-footer">
@@ -535,7 +553,7 @@
           <div class="card-header card-header-row">
             <div>
               <h2 id="h-monitor">Google TV terhubung</h2>
-              <p>Diperbarui setiap 10 detik.</p>
+              <p>Diperbarui setiap 10 detik. TV yang dihapus akan muncul lagi kalau masih menyala.</p>
             </div>
             <div class="btn-row">
               <button type="button" class="btn btn-secondary" data-tv-action="test-beep">
@@ -558,6 +576,89 @@
                 </tr>
               </thead>
               <tbody id="table-tv-clients"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 9: AKUN PENGURUS (admin only) -->
+      <section class="tab-content" id="tab-accounts" aria-labelledby="h-accounts" hidden>
+        <div class="split">
+          <div class="card">
+            <div class="card-header">
+              <h2 id="h-add-user">Tambah pengurus</h2>
+              <p>Bagikan nama pengguna dan kata sandi awal ke pengurus, lalu minta mereka menggantinya.</p>
+            </div>
+            <form id="form-add-user" class="card-body" novalidate>
+              <div class="field">
+                <label for="new-user-name">Nama lengkap</label>
+                <input type="text" class="input" id="new-user-name" required maxlength="60" placeholder="Contoh: Ust. Ahmad Fauzi">
+              </div>
+              <div class="field">
+                <label for="new-user-username">Nama pengguna</label>
+                <input type="text" class="input" id="new-user-username" required pattern="[a-z0-9._\-]{3,32}" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="off" aria-describedby="new-user-username-hint">
+                <p class="hint" id="new-user-username-hint">3–32 karakter: huruf kecil, angka, titik, minus atau garis bawah.</p>
+              </div>
+              <div class="field">
+                <label for="new-user-password">Kata sandi awal</label>
+                <input type="text" class="input" id="new-user-password" required minlength="8" autocomplete="off" spellcheck="false" aria-describedby="new-user-password-hint">
+                <p class="hint" id="new-user-password-hint">Minimal 8 karakter.</p>
+              </div>
+              <div class="field">
+                <label for="new-user-role">Peran</label>
+                <select class="input" id="new-user-role" aria-describedby="new-user-role-hint">
+                  <option value="pengurus" selected>Pengurus</option>
+                  <option value="admin">Admin</option>
+                </select>
+                <p class="hint" id="new-user-role-hint">Admin bisa mengelola akun dan melihat riwayat aktivitas.</p>
+              </div>
+              <button type="submit" class="btn btn-primary">
+                <iconify-icon icon="lucide:user-plus" aria-hidden="true"></iconify-icon> Tambah akun
+              </button>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2 id="h-accounts">Akun pengurus</h2>
+              <p>Akun yang dinonaktifkan atau dihapus langsung keluar dari semua perangkat.</p>
+            </div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Pengurus</th>
+                    <th scope="col">Peran</th>
+                    <th scope="col">Terakhir masuk</th>
+                    <th scope="col" class="col-actions"><span class="sr-only">Aksi</span></th>
+                  </tr>
+                </thead>
+                <tbody id="table-users"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header card-header-row">
+            <div>
+              <h2>Riwayat aktivitas</h2>
+              <p>100 perubahan terakhir dari semua pengurus.</p>
+            </div>
+            <button type="button" class="btn btn-secondary" id="btn-refresh-audit">
+              <iconify-icon icon="lucide:refresh-cw" aria-hidden="true"></iconify-icon> Muat ulang
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Waktu</th>
+                  <th scope="col">Pengurus</th>
+                  <th scope="col">Aktivitas</th>
+                </tr>
+              </thead>
+              <tbody id="table-audit"></tbody>
             </table>
           </div>
         </div>

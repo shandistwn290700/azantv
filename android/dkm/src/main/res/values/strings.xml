@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Takmir Azan TV</string>
+    <string name="no_file_picker">Tidak ada aplikasi untuk memilih foto</string>
+    <string name="no_browser">Tidak ada browser untuk membuka tautan</string>
+</resources>

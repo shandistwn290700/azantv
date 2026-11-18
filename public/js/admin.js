@@ -7,6 +7,21 @@ if (!token) {
   window.location.href = '/login';
 }
 
+// Any admin API call that comes back 401 means the session ended
+// (logged out elsewhere, account disabled, password changed): go to login.
+const nativeFetch = window.fetch.bind(window);
+window.fetch = async (input, init) => {
+  const res = await nativeFetch(input, init);
+  const url = typeof input === 'string' ? input : input.url;
+  if (res.status === 401 && url.startsWith('/api/admin/') && !url.startsWith('/api/admin/login')) {
+    localStorage.removeItem('azan_admin_token');
+    window.location.href = '/login';
+  }
+  return res;
+};
+
+let currentUser = null;
+
 function authHeaders() {
   return {
     'Content-Type': 'application/json',
@@ -59,10 +74,32 @@ navItems.forEach(item => {
 });
 
 /* ───────── Logout ───────── */
-document.getElementById('btn-logout').addEventListener('click', () => {
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  try {
+    await nativeFetch('/api/admin/logout', { method: 'POST', headers: authHeaders() });
+  } catch (e) {}
   localStorage.removeItem('azan_admin_token');
   window.location.href = '/login';
 });
+
+/* ───────── Signed-in user ───────── */
+async function loadCurrentUser() {
+  try {
+    const res = await fetch('/api/admin/me', { headers: authHeaders() });
+    if (!res.ok) return;
+    currentUser = (await res.json()).user;
+    document.getElementById('signed-in-name').textContent = currentUser.display_name;
+    document.getElementById('signed-in').hidden = false;
+    const isAdmin = currentUser.role === 'admin';
+    document.querySelectorAll('[data-admin-only]').forEach(el => { el.hidden = !isAdmin; });
+    if (isAdmin) {
+      loadUsers();
+      loadAuditLog();
+    }
+  } catch (err) {
+    console.error('Error load user:', err);
+  }
+}
 
 /* ───────── Validation states ───────── */
 function setFieldError(input, message) {
@@ -94,7 +131,11 @@ function setFieldError(input, message) {
 function messageFor(input) {
   const v = input.validity;
   if (v.valueMissing) return input.type === 'file' ? 'Pilih berkas terlebih dahulu.' : 'Wajib diisi.';
-  if (v.patternMismatch) return 'Format angka tidak sesuai. Gunakan titik untuk desimal.';
+  if (v.patternMismatch) {
+    return input.id === 'new-user-username'
+      ? 'Gunakan 3–32 huruf kecil, angka, titik, minus atau garis bawah.'
+      : 'Format angka tidak sesuai. Gunakan titik untuk desimal.';
+  }
   if (v.rangeUnderflow) return `Minimal ${input.min}.`;
   if (v.rangeOverflow) return `Maksimal ${input.max}.`;
   if (v.tooShort) return `Minimal ${input.minLength} karakter.`;
@@ -347,18 +388,49 @@ async function withBusy(form, fn) {
   try { await fn(); } finally { if (btn) btn.disabled = false; }
 }
 
-['form-masjid', 'form-ihtiyat', 'form-timers', 'form-jumat', 'form-bg-settings', 'form-password'].forEach(formId => {
+['form-masjid', 'form-ihtiyat', 'form-timers', 'form-jumat', 'form-bg-settings'].forEach(formId => {
   const f = document.getElementById(formId);
   if (!f) return;
   f.addEventListener('submit', (e) => {
     e.preventDefault();
     if (!validateForm(f)) return;
     const obj = Object.fromEntries(new FormData(f).entries());
-    const msg = formId === 'form-password' ? 'Kata sandi diganti. Gunakan untuk login berikutnya.' : null;
-    withBusy(f, async () => {
-      const ok = await saveSettings(obj, msg);
-      if (ok && formId === 'form-password') f.reset();
-    });
+    withBusy(f, () => saveSettings(obj));
+  });
+});
+
+/* ───────── Own password ───────── */
+document.getElementById('form-password').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const form = e.currentTarget;
+  if (!validateForm(form)) return;
+  const current = document.getElementById('current_password');
+  const next = document.getElementById('new_password');
+  const confirmInput = document.getElementById('confirm_password');
+  if (next.value !== confirmInput.value) {
+    setFieldError(confirmInput, 'Kata sandi baru tidak sama.');
+    confirmInput.focus();
+    return;
+  }
+  withBusy(form, async () => {
+    try {
+      const res = await fetch('/api/admin/me/password', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ current_password: current.value, new_password: next.value })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const target = /saat ini/i.test(data.error || '') ? current : next;
+        setFieldError(target, data.error || 'Gagal mengganti kata sandi.');
+        target.focus();
+        return;
+      }
+      form.reset();
+      showToast('Kata sandi diganti. Perangkat lain sudah dikeluarkan.');
+    } catch (err) {
+      showToast('Kesalahan jaringan saat mengganti kata sandi', true);
+    }
   });
 });
 
@@ -638,6 +710,9 @@ async function loadTvClients() {
               <button type="button" class="btn btn-secondary btn-sm" data-tv-action="reload" data-client="${id}">
                 <iconify-icon icon="lucide:refresh-cw" aria-hidden="true"></iconify-icon> Muat ulang
               </button>
+              <button type="button" class="btn btn-danger btn-sm" data-tv-delete="${id}" data-online="${isOnline ? '1' : '0'}" data-name="${escapeHtml(c.name)}">
+                <iconify-icon icon="lucide:trash-2" aria-hidden="true"></iconify-icon> Hapus
+              </button>
             </div>
           </td>
         </tr>
@@ -667,11 +742,200 @@ async function triggerTvAction(action, targetClientId = null) {
   }
 }
 
+async function deleteTvClient(btn) {
+  const name = btn.dataset.name || 'TV ini';
+  const msg = btn.dataset.online === '1'
+    ? `Hapus "${name}" dari daftar?\n\nTV ini masih menyala, jadi akan muncul lagi dalam ±30 detik. Matikan TV atau tutup aplikasinya dulu supaya tidak muncul lagi.`
+    : `Hapus "${name}" dari daftar?`;
+  if (!confirm(msg)) return;
+  try {
+    const res = await fetch(`/api/admin/tv-clients/${encodeURIComponent(btn.dataset.tvDelete)}`, {
+      method: 'DELETE',
+      headers: authHeaders()
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Gagal menghapus TV');
+    showToast(`"${name}" dihapus dari daftar`);
+    loadTvClients();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+/* ───────── Accounts (admin only) ───────── */
+let usersCache = [];
+const ROLE_LABEL = { admin: 'Admin', pengurus: 'Pengurus' };
+
+function formatDateTime(ms) {
+  if (!ms) return 'Belum pernah';
+  return new Date(ms).toLocaleString('id-ID', {
+    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+  });
+}
+
+async function loadUsers() {
+  const tbody = document.getElementById('table-users');
+  try {
+    const res = await fetch('/api/admin/users', { headers: authHeaders() });
+    if (!res.ok) return;
+    usersCache = await res.json();
+    tbody.innerHTML = usersCache.map(u => {
+      const isSelf = currentUser && u.id === currentUser.id;
+      const otherRole = u.role === 'admin' ? 'pengurus' : 'admin';
+      return `
+        <tr class="${u.is_active ? '' : 'is-inactive'}">
+          <td>
+            <div class="cell-strong">${escapeHtml(u.display_name)}${isSelf ? ' <span class="cell-sub">(Anda)</span>' : ''}</div>
+            <div class="cell-sub">@${escapeHtml(u.username)}${u.is_active ? '' : ' · nonaktif'}</div>
+          </td>
+          <td><span class="role-tag ${u.role === 'admin' ? 'is-admin' : ''}">${ROLE_LABEL[u.role] || escapeHtml(u.role)}</span></td>
+          <td class="cell-time">${escapeHtml(formatDateTime(u.last_login))}</td>
+          <td class="col-actions">
+            <div class="cell-actions">
+              <button type="button" class="btn btn-secondary btn-sm" data-user-action="reset-password" data-id="${u.id}">
+                <iconify-icon icon="lucide:key-round" aria-hidden="true"></iconify-icon> Reset sandi
+              </button>
+              ${isSelf ? '' : `
+              <button type="button" class="btn btn-secondary btn-sm" data-user-action="set-role" data-role="${otherRole}" data-id="${u.id}">
+                Jadikan ${ROLE_LABEL[otherRole]}
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" data-user-action="toggle-active" data-id="${u.id}">
+                ${u.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+              </button>
+              <button type="button" class="btn btn-danger btn-sm" data-user-action="delete" data-id="${u.id}">
+                <iconify-icon icon="lucide:trash-2" aria-hidden="true"></iconify-icon> Hapus
+              </button>`}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('') || '<tr><td colspan="4" class="cell-empty">Belum ada akun.</td></tr>';
+  } catch (err) {
+    console.error('Error load users:', err);
+  }
+}
+
+async function loadAuditLog() {
+  const tbody = document.getElementById('table-audit');
+  try {
+    const res = await fetch('/api/admin/audit?limit=100', { headers: authHeaders() });
+    if (!res.ok) return;
+    const rows = await res.json();
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td class="cell-time">${escapeHtml(formatDateTime(r.created_at))}</td>
+        <td>${escapeHtml(r.username || 'Sistem')}</td>
+        <td>
+          <div class="cell-strong">${escapeHtml(r.action)}</div>
+          ${r.detail ? `<div class="cell-sub">${escapeHtml(r.detail)}</div>` : ''}
+        </td>
+      </tr>
+    `).join('') || '<tr><td colspan="3" class="cell-empty">Belum ada aktivitas tercatat.</td></tr>';
+  } catch (err) {
+    console.error('Error load audit log:', err);
+  }
+}
+
+document.getElementById('btn-refresh-audit').addEventListener('click', loadAuditLog);
+
+document.getElementById('form-add-user').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const form = e.currentTarget;
+  const usernameInput = document.getElementById('new-user-username');
+  usernameInput.value = usernameInput.value.trim().toLowerCase();
+  if (!validateForm(form)) return;
+  const body = {
+    display_name: document.getElementById('new-user-name').value.trim(),
+    username: usernameInput.value,
+    password: document.getElementById('new-user-password').value,
+    role: document.getElementById('new-user-role').value
+  };
+  withBusy(form, async () => {
+    try {
+      const res = await fetch('/api/admin/users', { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) });
+      const data = await res.json();
+      if (!res.ok) {
+        const target = /pengguna/i.test(data.error || '') ? usernameInput
+          : /sandi/i.test(data.error || '') ? document.getElementById('new-user-password')
+          : document.getElementById('new-user-name');
+        setFieldError(target, data.error || 'Gagal menambah akun.');
+        target.focus();
+        return;
+      }
+      form.reset();
+      showToast(`Akun @${data.user.username} dibuat`);
+      loadUsers();
+      loadAuditLog();
+    } catch (err) {
+      showToast('Kesalahan jaringan saat menambah akun', true);
+    }
+  });
+});
+
+async function userAction(btn) {
+  const id = Number(btn.dataset.id);
+  const user = usersCache.find(u => u.id === id);
+  if (!user) return;
+  let url = `/api/admin/users/${id}`;
+  let method = 'PUT';
+  let body = null;
+  let done = '';
+
+  switch (btn.dataset.userAction) {
+    case 'reset-password': {
+      const pw = prompt(`Kata sandi baru untuk @${user.username} (minimal 8 karakter):`);
+      if (pw === null) return;
+      if (pw.length < 8) { showToast('Kata sandi minimal 8 karakter', true); return; }
+      url += '/password'; method = 'POST'; body = { new_password: pw };
+      done = `Kata sandi @${user.username} direset. Sampaikan ke yang bersangkutan.`;
+      break;
+    }
+    case 'set-role':
+      if (!confirm(`Jadikan ${user.display_name} sebagai ${ROLE_LABEL[btn.dataset.role]}?`)) return;
+      body = { role: btn.dataset.role };
+      done = `${user.display_name} sekarang ${ROLE_LABEL[btn.dataset.role]}`;
+      break;
+    case 'toggle-active':
+      if (user.is_active && !confirm(`Nonaktifkan ${user.display_name}? Akun ini langsung keluar dari semua perangkat.`)) return;
+      body = { is_active: !user.is_active };
+      done = user.is_active ? `${user.display_name} dinonaktifkan` : `${user.display_name} diaktifkan`;
+      break;
+    case 'delete':
+      if (!confirm(`Hapus akun ${user.display_name} (@${user.username})? Tindakan ini tidak bisa dibatalkan.`)) return;
+      method = 'DELETE';
+      done = `Akun @${user.username} dihapus`;
+      break;
+    default:
+      return;
+  }
+
+  try {
+    const res = await fetch(url, { method, headers: authHeaders(), body: body ? JSON.stringify(body) : undefined });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Gagal memproses akun');
+    showToast(done);
+    loadUsers();
+    loadAuditLog();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
 /* ───────── Delegated table / action clicks ───────── */
 document.addEventListener('click', (e) => {
   const tvBtn = e.target.closest('[data-tv-action]');
   if (tvBtn) {
     triggerTvAction(tvBtn.dataset.tvAction, tvBtn.dataset.client || null);
+    return;
+  }
+  const tvDelete = e.target.closest('[data-tv-delete]');
+  if (tvDelete) {
+    deleteTvClient(tvDelete);
+    return;
+  }
+  const userBtn = e.target.closest('[data-user-action]');
+  if (userBtn) {
+    userAction(userBtn);
     return;
   }
   const btn = e.target.closest('[data-action]');
@@ -686,6 +950,7 @@ setInterval(loadTvClients, 10000);
 
 window.addEventListener('DOMContentLoaded', () => {
   // Parallel, independent loads
+  loadCurrentUser();
   loadCities();
   loadSettings();
   loadRunningTexts();

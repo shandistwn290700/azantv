@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "AzanTV"
-include(":app")
+include(":tv", ":dkm")

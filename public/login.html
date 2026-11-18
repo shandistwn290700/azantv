@@ -160,13 +160,17 @@
   <main>
     <div class="login-box">
       <h2>Masuk</h2>
-      <p class="lead">Gunakan kata sandi pengurus.</p>
+      <p class="lead">Gunakan akun pengurus Anda.</p>
 
       <form id="login-form" novalidate>
         <div class="error-alert" id="error-msg" role="alert"></div>
         <div class="field">
+          <label for="username">Nama pengguna</label>
+          <input type="text" class="input" id="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required>
+        </div>
+        <div class="field">
           <label for="password">Kata sandi</label>
-          <input type="password" class="input" id="password" autocomplete="current-password" required autofocus>
+          <input type="password" class="input" id="password" autocomplete="current-password" required>
         </div>
         <button type="submit" class="btn" id="btn-submit">Masuk ke panel</button>
       </form>
@@ -179,6 +183,9 @@
     const form = document.getElementById('login-form');
     const errBox = document.getElementById('error-msg');
     const pwInput = document.getElementById('password');
+    const userInput = document.getElementById('username');
+    try { userInput.value = localStorage.getItem('azan_admin_username') || ''; } catch (e) {}
+    (userInput.value ? pwInput : userInput).focus();
     const submitBtn = document.getElementById('btn-submit');
 
     const token = localStorage.getItem('azan_admin_token');
@@ -190,24 +197,36 @@
       }).catch(() => {});
     }
 
-    function showError(msg) {
+    function showError(msg, input) {
       errBox.textContent = msg;
       errBox.classList.add('show');
-      pwInput.setAttribute('aria-invalid', 'true');
-      pwInput.setAttribute('aria-describedby', 'error-msg');
+      [userInput, pwInput].forEach(el => {
+        if (!input || el === input) {
+          el.setAttribute('aria-invalid', 'true');
+          el.setAttribute('aria-describedby', 'error-msg');
+        }
+      });
     }
 
-    pwInput.addEventListener('input', () => {
+    [userInput, pwInput].forEach(el => el.addEventListener('input', () => {
       errBox.classList.remove('show');
-      pwInput.removeAttribute('aria-invalid');
-      pwInput.removeAttribute('aria-describedby');
-    });
+      [userInput, pwInput].forEach(i => {
+        i.removeAttribute('aria-invalid');
+        i.removeAttribute('aria-describedby');
+      });
+    }));
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const username = userInput.value.trim().toLowerCase();
       const password = pwInput.value;
+      if (!username) {
+        showError('Nama pengguna wajib diisi.', userInput);
+        userInput.focus();
+        return;
+      }
       if (!password) {
-        showError('Kata sandi wajib diisi.');
+        showError('Kata sandi wajib diisi.', pwInput);
         pwInput.focus();
         return;
       }
@@ -217,14 +236,16 @@
         const res = await fetch('/api/admin/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password })
+          body: JSON.stringify({ username, password })
         });
         const data = await res.json();
         if (res.ok && data.token) {
           localStorage.setItem('azan_admin_token', data.token);
+          try { localStorage.setItem('azan_admin_username', username); } catch (e) {}
           window.location.href = '/admin';
         } else {
-          showError(data.error || 'Kata sandi salah.');
+          showError(data.error || 'Nama pengguna atau kata sandi salah.');
+          pwInput.select();
           pwInput.focus();
         }
       } catch (err) {

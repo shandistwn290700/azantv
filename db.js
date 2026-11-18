@@ -1,18 +1,11 @@
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
 const { DatabaseSync } = require('node:sqlite');
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
-
-// Admin password only seeds a fresh database; afterwards it lives in the
-// settings table and is changed from the admin panel.
-const ENV_ADMIN_PASSWORD = (process.env.ADMIN_PASSWORD || '').trim();
-const INITIAL_ADMIN_PASSWORD = ENV_ADMIN_PASSWORD || crypto.randomBytes(9).toString('base64url');
-const LEGACY_DEFAULT_PASSWORD = 'admin123';
 
 const DB_PATH = path.join(DATA_DIR, 'database.sqlite');
 const db = new DatabaseSync(DB_PATH);
@@ -86,7 +79,6 @@ function initDb() {
     theme: "argon",
     tv_bg_image: "/img/backgrounds/default.jpg",
     tv_bg_overlay: "0.25",
-    admin_password: INITIAL_ADMIN_PASSWORD,
     jumat_khatib: "Ust. Ahmad Fauzi, M.Ag",
     jumat_imam: "Ust. Muhammad Ridwan",
     jumat_muadzin: "Ust. Bilal",
@@ -100,34 +92,9 @@ function initDb() {
     const existing = getStmt.get(key);
     if (!existing) {
       insertStmt.run(key, String(value));
-      if (key === 'admin_password' && !ENV_ADMIN_PASSWORD) {
-        console.log(`[AUTH] ADMIN_PASSWORD tidak diset. Password awal panel takmir: ${value}`);
-        console.log('[AUTH] Catat sekarang dan segera ganti lewat panel. Password ini tidak ditampilkan lagi.');
-      }
     }
   }
-
-  // Older installs were seeded with a hardcoded default password.
-  const storedPw = db.prepare("SELECT value FROM settings WHERE key = 'admin_password'").get();
-  if (storedPw && storedPw.value === LEGACY_DEFAULT_PASSWORD) {
-    if (ENV_ADMIN_PASSWORD && ENV_ADMIN_PASSWORD !== LEGACY_DEFAULT_PASSWORD) {
-      db.prepare("UPDATE settings SET value = ? WHERE key = 'admin_password'").run(ENV_ADMIN_PASSWORD);
-      console.log('[AUTH] Password default lama diganti dengan nilai ADMIN_PASSWORD.');
-    } else {
-      console.warn('[AUTH] Panel takmir masih memakai password default. Segera ganti lewat panel atau set ADMIN_PASSWORD.');
-    }
-  }
-
-  // Lost-password recovery: set ADMIN_PASSWORD_RESET=true together with
-  // ADMIN_PASSWORD, redeploy once, then remove ADMIN_PASSWORD_RESET.
-  if (/^(1|true|yes)$/i.test((process.env.ADMIN_PASSWORD_RESET || '').trim())) {
-    if (ENV_ADMIN_PASSWORD) {
-      db.prepare("UPDATE settings SET value = ? WHERE key = 'admin_password'").run(ENV_ADMIN_PASSWORD);
-      console.warn('[AUTH] Password panel takmir di-reset ke nilai ADMIN_PASSWORD. Hapus ADMIN_PASSWORD_RESET setelah berhasil login.');
-    } else {
-      console.warn('[AUTH] ADMIN_PASSWORD_RESET aktif tapi ADMIN_PASSWORD kosong. Reset dibatalkan.');
-    }
-  }
+  // Admin accounts, sessions and the audit log live in auth.js.
 
   // Insert default running texts if empty
   const countTexts = db.prepare('SELECT COUNT(*) as count FROM running_texts').get();

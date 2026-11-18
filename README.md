@@ -27,7 +27,8 @@ Aplikasi ini sangat siap di-deploy pada **Coolify + WSL + Cloudflare Tunnel** me
 - **Resiliensi Offline (Offline Cache)**: Jika koneksi internet atau tunnel ke TV sempat terputus, TV tetap berjalan normal menghitung jam dan jadwal sholat secara mandiri menggunakan cache lokal.
 
 ### 2. Panel Administrasi Takmir (`/admin`)
-- **Login Terproteksi Password**: Akses aman khusus pengurus masjid (password awal dari env `ADMIN_PASSWORD`, atau dibuat acak dan ditampilkan di log saat pertama kali jalan; dapat diubah di panel).
+- **Akun per Pengurus**: Tiap pengurus login dengan nama pengguna & kata sandi sendiri. Peran **Admin** bisa menambah, menonaktifkan, menghapus akun, mereset kata sandi, dan melihat **riwayat aktivitas** (siapa mengubah apa). Akun pertama `admin` dibuat otomatis (lihat `ADMIN_PASSWORD` di bawah).
+- **Aplikasi HP Pengurus**: APK Android "Takmir Azan TV" untuk membuka panel dari HP (lihat [android/README.md](android/README.md)).
 - **Data Masjid & Preset Kota Indonesia**: Pilihan cepat puluhan kota di Indonesia yang otomatis mengisikan koordinat Latitude, Longitude, dan Zona Waktu (WIB/WITA/WIT).
 - **Pengaturan Ihtiyat (Koreksi Menit)**: Kemudahan mengatur selisih menit jadwal (+/- menit) per waktu sholat.
 - **Pengaturan Timer Khusus**: Mengatur durasi azan, durasi iqamah masing-masing sholat, durasi layar gelap salat, dan saklar audio bip.
@@ -39,7 +40,7 @@ Aplikasi ini sangat siap di-deploy pada **Coolify + WSL + Cloudflare Tunnel** me
   - Petugas Sholat Jum'at (Khatib, Imam, Muadzin, Bilal).
   - Upload Poster Gambar Kegiatan (format JPG/PNG/WebP rasio 16:9).
 - **Pilihan Tema Warna TV**: Pilihan tema *Islamic Emerald Green & Gold*, *Royal Midnight Navy*, dan *Onyx Dark Charcoal*.
-- **Monitoring Google TV Real-time**: Memantau status perangkat TV yang sedang online, resolusi layar, IP, serta fitur remote **"Test Bip di TV"** dan **"Paksa Refresh TV"**.
+- **Monitoring Google TV Real-time**: Memantau status perangkat TV yang sedang online, resolusi layar, IP, serta fitur remote **"Test Bip di TV"**, **"Paksa Refresh TV"**, dan **hapus TV dari daftar** (TV yang masih menyala akan muncul lagi).
 
 ---
 
@@ -103,7 +104,9 @@ Karena server Anda sudah online menggunakan **Coolify** yang terintegrasi dengan
      - **Name**: `azan-uploads`
      - **Destination Path**: `/app/public/uploads`
 7. Pada tab **Environment Variables**, Anda dapat menambahkan (opsional):
-   - `ADMIN_PASSWORD=<password-kuat>`: password awal panel takmir, hanya dipakai saat database pertama kali dibuat. Kalau dikosongkan, server membuat password acak dan menampilkannya sekali di log. Setelah itu ganti password lewat panel.
+   - `ADMIN_PASSWORD=<password-kuat>`: kata sandi awal akun `admin`, hanya dipakai saat database pertama kali dibuat. Kalau dikosongkan, server membuat kata sandi acak dan menampilkannya sekali di log. Setelah itu kelola akun lewat panel.
+   - `ADMIN_PASSWORD_RESET=true` (darurat, lupa kata sandi): saat deploy berikutnya kata sandi akun `admin` di-reset ke `ADMIN_PASSWORD` dan akunnya diaktifkan kembali sebagai Admin. Kembalikan ke `false` setelah berhasil login.
+   - `ADMIN_USERNAME` (opsional, default `admin`): nama pengguna akun awal / akun yang di-reset.
    - `PORT=3000`
 8. Klik **Deploy**. Tunggu proses build beberapa saat hingga statusnya menjadi **Healthy**.
 
@@ -170,13 +173,14 @@ npm run dev
 
 Akses melalui browser di:
 - Layar Google TV: [http://localhost:3000/tv](http://localhost:3000/tv)
-- Panel Admin Takmir: [http://localhost:3000/admin](http://localhost:3000/admin) (password: lihat log server saat pertama kali jalan, atau set `ADMIN_PASSWORD`)
+- Panel Admin Takmir: [http://localhost:3000/admin](http://localhost:3000/admin) (login `admin`, kata sandi: lihat log server saat pertama kali jalan, atau set `ADMIN_PASSWORD`)
 - Portal Navigasi: [http://localhost:3000/](http://localhost:3000/)
 
 ---
 
 ## 🛡️ Keamanan & Kestabilan
-- Password admin tersimpan secara aman dalam SQLite dan dapat diubah langsung dari tab **Tema & Keamanan**.
-- Endpoint publik `/api/data` tidak membocorkan hash/password admin.
+- Kata sandi pengurus disimpan sebagai hash scrypt; token sesi disimpan sebagai hash SHA-256 dan berlaku 30 hari (diperpanjang saat dipakai).
+- Login dibatasi 5 percobaan gagal per IP + nama pengguna, lalu dikunci 15 menit.
+- Endpoint publik `/api/data` tidak memuat data akun apa pun.
 - Proteksi upload file gambar dibatasi maksimal 10 MB dan hanya mengizinkan ekstensi gambar yang valid.
 - Komunikasi real-time menggunakan **Server-Sent Events (SSE)** yang sangat ramah terhadap Cloudflare Tunnel (bebas timeout dan auto-reconnect).
