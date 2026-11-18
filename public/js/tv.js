@@ -23,8 +23,27 @@ function escapeHtml(value) {
 function safeImageUrl(url) {
   if (!url) return '';
   const u = String(url).trim();
-  if (u.startsWith('/uploads/') || /^https?:\/\//i.test(u)) return u.replace(/"/g, '%22');
+  if (u.startsWith('/uploads/') || u.startsWith('/img/') || /^https?:\/\//i.test(u)) return u.replace(/"/g, '%22');
   return '';
+}
+
+const DEFAULT_BG = '/img/backgrounds/default.jpg';
+
+// Preload the photo first; if it fails (deleted upload, dead external URL,
+// offline), fall back to the bundled default instead of a blank screen.
+function applyBackground(layer, url) {
+  if (layer.dataset.bgUrl === url) return;
+  layer.dataset.bgUrl = url;
+  const img = new Image();
+  img.onload = () => {
+    if (layer.dataset.bgUrl === url) layer.style.backgroundImage = `url("${url}")`;
+  };
+  img.onerror = () => {
+    if (layer.dataset.bgUrl !== url) return;
+    console.warn('Foto latar gagal dimuat, pakai default:', url);
+    layer.style.backgroundImage = `url("${DEFAULT_BG}")`;
+  };
+  img.src = url;
 }
 
 // Global State
@@ -135,8 +154,8 @@ function applyDataToUI() {
   // 1. Custom background image & overlay
   const bgLayer = document.getElementById('tv-bg-layer');
   if (bgLayer) {
-    const bgUrl = safeImageUrl(s.tv_bg_image) || '/uploads/default_bg.jpg';
-    bgLayer.style.backgroundImage = `url("${bgUrl}")`;
+    const bgUrl = safeImageUrl(s.tv_bg_image) || DEFAULT_BG;
+    applyBackground(bgLayer, bgUrl);
   }
   const bgOverlay = document.getElementById('tv-bg-overlay');
   if (bgOverlay) {

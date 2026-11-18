@@ -293,7 +293,7 @@ async function loadSettings() {
     set('jumat_tanggal', s.jumat_tanggal || '');
 
     // Background
-    const bgUrl = s.tv_bg_image || '/uploads/default_bg.jpg';
+    const bgUrl = s.tv_bg_image || DEFAULT_BG;
     set('tv_bg_image', bgUrl);
     set('tv_bg_overlay', def(s.tv_bg_overlay, '0.25'));
     setBackgroundPreview(bgUrl);
@@ -306,8 +306,16 @@ async function loadSettings() {
   }
 }
 
+const DEFAULT_BG = '/img/backgrounds/default.jpg';
+
 function setBackgroundPreview(url) {
-  document.getElementById('bg-preview-img').src = url;
+  const img = document.getElementById('bg-preview-img');
+  img.onerror = () => {
+    img.onerror = null;
+    img.src = DEFAULT_BG;
+    showToast('Foto latar tidak ditemukan. TV memakai latar default.', true);
+  };
+  img.src = url;
   document.querySelectorAll('.btn-preset-bg').forEach(btn => {
     btn.setAttribute('aria-pressed', btn.dataset.url === url ? 'true' : 'false');
   });

@@ -77,7 +77,7 @@ function initDb() {
     hijri_offset: "0",
     beep_enabled: "1",
     theme: "argon",
-    tv_bg_image: "/uploads/default_bg.jpg",
+    tv_bg_image: "/img/backgrounds/default.jpg",
     tv_bg_overlay: "0.25",
     admin_password: process.env.ADMIN_PASSWORD || "admin123",
     jumat_khatib: "Ust. Ahmad Fauzi, M.Ag",
@@ -149,6 +149,19 @@ function initDb() {
       10,
       4
     );
+  }
+
+  // Migrate legacy background paths that pointed at images never shipped
+  // in /uploads (that folder is a runtime volume, so they always 404'd).
+  const legacyBg = {
+    '/uploads/default_bg.jpg': '/img/backgrounds/default.jpg',
+    '/uploads/kaaba_1.jpg': '/img/backgrounds/kaaba-dekat.jpg',
+    '/uploads/kaaba_2.jpg': '/img/backgrounds/kaaba-pelataran.jpg',
+    '/uploads/nabawi.jpg': '/img/backgrounds/nabawi.jpg'
+  };
+  const currentBg = db.prepare("SELECT value FROM settings WHERE key = 'tv_bg_image'").get();
+  if (currentBg && legacyBg[currentBg.value]) {
+    db.prepare("UPDATE settings SET value = ? WHERE key = 'tv_bg_image'").run(legacyBg[currentBg.value]);
   }
 }
 

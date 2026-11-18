@@ -30,7 +30,7 @@ iconify-icon { display: inline-flex; }
 .tv-background-layer {
   position: absolute;
   inset: 0;
-  background-image: url('/uploads/default_bg.jpg');
+  background-image: url('/img/backgrounds/default.jpg');
   background-size: cover;
   background-position: center;
   z-index: 1;
