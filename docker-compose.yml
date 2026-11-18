@@ -11,6 +11,8 @@ services:
       # Isi nilainya di Coolify (Environment Variables), jangan di file ini.
       # Hanya dipakai saat database pertama kali dibuat; setelah itu ganti lewat panel takmir.
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      # Lupa password: isi ADMIN_PASSWORD, set ini ke true, deploy, lalu hapus lagi.
+      - ADMIN_PASSWORD_RESET=${ADMIN_PASSWORD_RESET:-}
       - DATA_DIR=/app/data
     volumes:
       - azan_tv_data:/app/data

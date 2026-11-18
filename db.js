@@ -118,6 +118,17 @@ function initDb() {
     }
   }
 
+  // Lost-password recovery: set ADMIN_PASSWORD_RESET=true together with
+  // ADMIN_PASSWORD, redeploy once, then remove ADMIN_PASSWORD_RESET.
+  if (/^(1|true|yes)$/i.test((process.env.ADMIN_PASSWORD_RESET || '').trim())) {
+    if (ENV_ADMIN_PASSWORD) {
+      db.prepare("UPDATE settings SET value = ? WHERE key = 'admin_password'").run(ENV_ADMIN_PASSWORD);
+      console.warn('[AUTH] Password panel takmir di-reset ke nilai ADMIN_PASSWORD. Hapus ADMIN_PASSWORD_RESET setelah berhasil login.');
+    } else {
+      console.warn('[AUTH] ADMIN_PASSWORD_RESET aktif tapi ADMIN_PASSWORD kosong. Reset dibatalkan.');
+    }
+  }
+
   // Insert default running texts if empty
   const countTexts = db.prepare('SELECT COUNT(*) as count FROM running_texts').get();
   if (countTexts.count === 0) {
