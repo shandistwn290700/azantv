@@ -8,7 +8,9 @@ services:
     environment:
       - PORT=3000
       - NODE_ENV=production
-      - ADMIN_PASSWORD=admin123
+      # Isi nilainya di Coolify (Environment Variables), jangan di file ini.
+      # Hanya dipakai saat database pertama kali dibuat; setelah itu ganti lewat panel takmir.
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
       - DATA_DIR=/app/data
     volumes:
       - azan_tv_data:/app/data

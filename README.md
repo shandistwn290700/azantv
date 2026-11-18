@@ -27,7 +27,7 @@ Aplikasi ini sangat siap di-deploy pada **Coolify + WSL + Cloudflare Tunnel** me
 - **Resiliensi Offline (Offline Cache)**: Jika koneksi internet atau tunnel ke TV sempat terputus, TV tetap berjalan normal menghitung jam dan jadwal sholat secara mandiri menggunakan cache lokal.
 
 ### 2. Panel Administrasi Takmir (`/admin`)
-- **Login Terproteksi Password**: Akses aman khusus pengurus masjid (default password: `admin123`, dapat diubah di panel).
+- **Login Terproteksi Password**: Akses aman khusus pengurus masjid (password awal dari env `ADMIN_PASSWORD`, atau dibuat acak dan ditampilkan di log saat pertama kali jalan; dapat diubah di panel).
 - **Data Masjid & Preset Kota Indonesia**: Pilihan cepat puluhan kota di Indonesia yang otomatis mengisikan koordinat Latitude, Longitude, dan Zona Waktu (WIB/WITA/WIT).
 - **Pengaturan Ihtiyat (Koreksi Menit)**: Kemudahan mengatur selisih menit jadwal (+/- menit) per waktu sholat.
 - **Pengaturan Timer Khusus**: Mengatur durasi azan, durasi iqamah masing-masing sholat, durasi layar gelap salat, dan saklar audio bip.
@@ -103,7 +103,7 @@ Karena server Anda sudah online menggunakan **Coolify** yang terintegrasi dengan
      - **Name**: `azan-uploads`
      - **Destination Path**: `/app/public/uploads`
 7. Pada tab **Environment Variables**, Anda dapat menambahkan (opsional):
-   - `ADMIN_PASSWORD=rahasiamasjid` (jika ingin mengubah password default dari env)
+   - `ADMIN_PASSWORD=<password-kuat>`: password awal panel takmir, hanya dipakai saat database pertama kali dibuat. Kalau dikosongkan, server membuat password acak dan menampilkannya sekali di log. Setelah itu ganti password lewat panel.
    - `PORT=3000`
 8. Klik **Deploy**. Tunggu proses build beberapa saat hingga statusnya menjadi **Healthy**.
 
@@ -170,7 +170,7 @@ npm run dev
 
 Akses melalui browser di:
 - Layar Google TV: [http://localhost:3000/tv](http://localhost:3000/tv)
-- Panel Admin Takmir: [http://localhost:3000/admin](http://localhost:3000/admin) (Password: `admin123`)
+- Panel Admin Takmir: [http://localhost:3000/admin](http://localhost:3000/admin) (password: lihat log server saat pertama kali jalan, atau set `ADMIN_PASSWORD`)
 - Portal Navigasi: [http://localhost:3000/](http://localhost:3000/)
 
 ---

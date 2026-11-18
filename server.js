@@ -316,6 +316,6 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`- Port       : ${PORT}`);
   console.log(`- Display TV : http://localhost:${PORT}/tv`);
   console.log(`- Admin Panel: http://localhost:${PORT}/admin`);
-  console.log(`- Password   : admin123 (dapat diganti di panel)`);
+  console.log(`- Password   : dari env ADMIN_PASSWORD saat pertama dibuat (dapat diganti di panel)`);
   console.log(`=======================================================`);
 });
