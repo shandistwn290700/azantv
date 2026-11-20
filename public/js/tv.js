@@ -403,9 +403,19 @@ function handlePrayerScheduleAndCountdowns(now, currentSec) {
         return;
       }
     }
+    // TV switched on or reloaded during the khutbah: show it for the remaining time
+    if (isJumat('dzuhur', now)) {
+      const khutbahStart = timeToSeconds(pt.dzuhur) + azanDurationSec();
+      const khutbahEnd = khutbahStart + khutbahDurationSec();
+      if (currentSec >= khutbahStart && currentSec < khutbahEnd) {
+        startKhutbah((khutbahEnd - currentSec) * 1000);
+        return;
+      }
+    }
   }
 
   if (currentState === 'AZAN') { handleAzanState(now); return; }
+  if (currentState === 'KHUTBAH') { handleKhutbahState(now); return; }
   if (currentState === 'IQOMAH') { handleIqomahState(now); return; }
   if (currentState === 'SALAT') { handleSalatState(now); return; }
 
@@ -449,11 +459,19 @@ function handlePrayerScheduleAndCountdowns(now, currentSec) {
   });
 }
 
+function azanDurationSec() {
+  return parseInt(appData.settings.azan_duration || 3, 10) * 60;
+}
+
+// Estimated length of khutbah + salat Jumat; replaces the iqomah countdown on Fridays.
+function khutbahDurationSec() {
+  return parseInt(appData.settings.khutbah_duration || 60, 10) * 60;
+}
+
 function startAzan(prayer) {
   currentState = 'AZAN';
   activePrayer = prayer;
-  const azanDurationMin = parseInt(appData.settings.azan_duration || 3, 10);
-  stateEndTime = Date.now() + azanDurationMin * 60 * 1000;
+  stateEndTime = Date.now() + azanDurationSec() * 1000;
 
   document.getElementById('azan-lead').innerText = prayer.jumat ? 'Waktunya azan Jumat' : 'Waktu sholat telah tiba';
   document.getElementById('azan-prayer-hero').innerText = `Adzan ${prayer.name}`;
@@ -467,7 +485,25 @@ function startAzan(prayer) {
 function handleAzanState(now) {
   if (stateEndTime - Date.now() <= 0) {
     document.getElementById('overlay-azan').classList.remove('active');
-    startIqomah(activePrayer);
+    if (activePrayer && activePrayer.jumat) {
+      startKhutbah(khutbahDurationSec() * 1000);
+    } else {
+      startIqomah(activePrayer);
+    }
+  }
+}
+
+function startKhutbah(durationMs) {
+  currentState = 'KHUTBAH';
+  stateEndTime = Date.now() + durationMs;
+  document.getElementById('overlay-khutbah').classList.add('active');
+}
+
+function handleKhutbahState(now) {
+  if (stateEndTime - Date.now() <= 0) {
+    document.getElementById('overlay-khutbah').classList.remove('active');
+    currentState = 'NORMAL';
+    activePrayer = null;
   }
 }
 
