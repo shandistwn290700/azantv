@@ -198,6 +198,15 @@ function applyDataToUI() {
   tick();
 }
 
+// On Fridays the Dzuhur slot is Jumat prayer.
+function isJumat(prayerKey, date) {
+  return prayerKey === 'dzuhur' && date.getDay() === 5;
+}
+
+function prayerName(prayer, date) {
+  return isJumat(prayer.key, date) ? 'Jumat' : prayer.name;
+}
+
 // Seven-card prayer deck. Imsak and Syuruq are markers, rendered quieter.
 function renderPrayerBar() {
   if (!appData || !appData.prayerTimes) return;
@@ -223,7 +232,7 @@ function renderPrayerBar() {
     slot.id = `slot-${p.key}`;
     slot.innerHTML = `
       <span class="slot-next-label">Berikutnya</span>
-      <span class="slot-title">${p.name}</span>
+      <span class="slot-title" id="title-${p.key}">${prayerName(p, new Date(Date.now() + serverSkew))}</span>
       <span class="slot-hour">${escapeHtml(pt[p.key] || '--:--')}</span>
       <span class="slot-countdown" id="cd-${p.key}"></span>
     `;
@@ -390,7 +399,7 @@ function handlePrayerScheduleAndCountdowns(now, currentSec) {
   if (currentState === 'NORMAL') {
     for (const p of mainPrayers) {
       if (currentSec === timeToSeconds(pt[p.key])) {
-        startAzan(p);
+        startAzan({ ...p, name: prayerName(p, now), jumat: isJumat(p.key, now) });
         return;
       }
     }
@@ -423,13 +432,17 @@ function handlePrayerScheduleAndCountdowns(now, currentSec) {
 
   const badgeLabel = document.getElementById('badge-countdown-label');
   const badgeText = document.getElementById('badge-countdown-text');
-  if (badgeLabel) badgeLabel.innerText = `Menuju ${nextPoint.name}`;
+  if (badgeLabel) badgeLabel.innerText = `Menuju ${prayerName(nextPoint, now)}`;
   if (badgeText) badgeText.innerText = cdFormatted;
 
   allPoints.forEach(p => {
     const slot = document.getElementById(`slot-${p.key}`);
     const cdSlot = document.getElementById(`cd-${p.key}`);
     if (!slot) return;
+    // Keeps the Dzuhur/Jumat card right when the day changes without a reload
+    const titleEl = document.getElementById(`title-${p.key}`);
+    const title = prayerName(p, now);
+    if (titleEl && titleEl.innerText !== title) titleEl.innerText = title;
     const isNext = p.key === nextPoint.key;
     slot.classList.toggle('is-active-slot', isNext);
     if (cdSlot) cdSlot.innerText = isNext ? `-${cdFormatted}` : '';
@@ -442,6 +455,7 @@ function startAzan(prayer) {
   const azanDurationMin = parseInt(appData.settings.azan_duration || 3, 10);
   stateEndTime = Date.now() + azanDurationMin * 60 * 1000;
 
+  document.getElementById('azan-lead').innerText = prayer.jumat ? 'Waktunya azan Jumat' : 'Waktu sholat telah tiba';
   document.getElementById('azan-prayer-hero').innerText = `Adzan ${prayer.name}`;
   document.getElementById('overlay-azan').classList.add('active');
 
